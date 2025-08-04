@@ -9,7 +9,7 @@
 		<relativePath/>
 	</parent>
 	<groupId>com.appointment</groupId>
-	<artifactId>appointment</artifactId>
+	<artifactId>appointment-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>appointment</name>
 	<description>Spring Boot application for appointment management system</description>
