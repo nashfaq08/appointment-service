@@ -62,11 +62,23 @@ public class AppointmentController {
         return ResponseEntity.ok(new ApiResponse(true, "Appointment accepted."));
     }
 
-//    @PreAuthorize("hasRole('CUSTOMER')")
-//    @GetMapping("/user/{customerId}")
-//    public ResponseEntity<List<Appointment>> byCustomer(@PathVariable UUID customerId) {
-//        return ResponseEntity.ok(appointmentService.getByCustomer(customerId));
-//    }
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @GetMapping("/customer")
+    public ResponseEntity<List<Appointment>> byCustomer(
+            Authentication authentication
+    ) {
+        String customerAuthUserId = authentication.getName();
+        return ResponseEntity.ok(appointmentService.getByCustomer(customerAuthUserId));
+    }
+
+    @PreAuthorize("hasRole('LAWYER')")
+    @GetMapping("/lawyer")
+    public ResponseEntity<List<Appointment>> byLawyer(
+            Authentication authentication
+    ) {
+        String lawyerAuthUserId = authentication.getName();
+        return ResponseEntity.ok(appointmentService.getByLawyer(lawyerAuthUserId));
+    }
 
 //    @GetMapping("/lawyer/{lawyerId}")
 //    public ResponseEntity<List<Appointment>> byLawyer(@PathVariable UUID lawyerId) {

@@ -44,5 +44,5 @@ jwt:
   expiration: 3600000
 
 service:
-  profile-url: "http://localhost:8081"
+  profile-url: "http://10.255.3.15:9212"
   internal-secret: "abcd1234"

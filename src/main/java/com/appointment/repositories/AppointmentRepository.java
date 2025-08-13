@@ -19,4 +19,5 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
             @Param("dayOfWeek") int dayOfWeek);
 
 
+    List<Appointment> findAllByCustomerId(UUID customerId);
 }

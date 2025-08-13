@@ -14,6 +14,7 @@ import com.appointment.repositories.AppointmentTypeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -162,16 +163,17 @@ public class AppointmentService {
 
     @Transactional
     public void acceptOpenAppointment(UUID appointmentId, String lawyerAuthUserId) {
+
+        // Verify lawyer existence & status (via profile service)
+        if (!profileServiceClient.isLawyerValid(UUID.fromString(lawyerAuthUserId))) {
+            throw new ApiException("Lawyer not authorized to accept this appointment.", "LAWYER_NOT_AUTHORIZED", HttpStatus.UNAUTHORIZED);
+        }
+
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ApiException("Appointment not found", "APPOINTMENT_NOT_FOUND", HttpStatus.NOT_FOUND));
 
         if (appointment.getStatus() != AppointmentStatus.OPEN) {
             throw new ApiException("Appointment already taken.", "APPOINTMENT_ALREADY_BOOKED", HttpStatus.BAD_REQUEST);
-        }
-
-        // Verify lawyer existence & status (via profile service)
-        if (!profileServiceClient.isLawyerValid(UUID.fromString(lawyerAuthUserId))) {
-            throw new ApiException("Lawyer not authorized to accept this appointment.", "LAWYER_NOT_AUTHORIZED", HttpStatus.UNAUTHORIZED);
         }
 
         // Assign appointment to lawyer
@@ -182,10 +184,20 @@ public class AppointmentService {
         appointmentRepository.save(appointment);
     }
 
-//    public List<Appointment> getByCustomer(UUID customerId) {
-//        return appointmentRepository.findByCustomerId(customerId);
-//    }
-//
+    public List<Appointment> getByCustomer(String customerAuthUserId) {
+        if (!profileServiceClient.isCustomerExist(UUID.fromString(customerAuthUserId))) {
+            throw new ApiException("Customer not authorized to list the appointments.", "CUSTOMER_NOT_AUTHORIZED", HttpStatus.UNAUTHORIZED);
+        }
+        return appointmentRepository.findAllByCustomerId(UUID.fromString(customerAuthUserId));
+    }
+
+    public List<Appointment> getByLawyer(String lawyerAuthUserId) {
+        if (!profileServiceClient.isLawyerValid(UUID.fromString(lawyerAuthUserId))) {
+            throw new ApiException("lawyer not authorized to list the appointments.", "LAWYER_NOT_AUTHORIZED", HttpStatus.UNAUTHORIZED);
+        }
+        return appointmentRepository.findAllByCustomerId(UUID.fromString(lawyerAuthUserId));
+    }
+
 //    public List<Appointment> getByLawyer(UUID lawyerId) {
 //        return appointmentRepository.findByLawyerId(lawyerId);
 //    }
