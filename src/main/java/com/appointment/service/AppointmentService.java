@@ -195,7 +195,7 @@ public class AppointmentService {
         if (!profileServiceClient.isLawyerValid(UUID.fromString(lawyerAuthUserId))) {
             throw new ApiException("lawyer not authorized to list the appointments.", "LAWYER_NOT_AUTHORIZED", HttpStatus.UNAUTHORIZED);
         }
-        return appointmentRepository.findAllByCustomerId(UUID.fromString(lawyerAuthUserId));
+        return appointmentRepository.findAllByLawyerId(UUID.fromString(lawyerAuthUserId));
     }
 
 //    public List<Appointment> getByLawyer(UUID lawyerId) {
