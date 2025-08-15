@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "lawyers-appointment",
+  "private_key_id": "8c86cc0a7b469a0c7a5f2b04fc881676be4feb52",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4h2WQhgtY4MTw\n2u7h/3M4eoD2Cj7GPUQyduzwWY6vPKs+wNzHHVZBQ3tUm/n0fLetYmv95gyvMceD\nYMyatYhyLRqdjQ84tP74fY5i2Yw89Xju5jbDY13nlT8g6fPdwv2bufMDXdL84sZ6\n7jcVjX+hVlkMNwNXNylvnVCxLh1lqlPiJRoM0lwon6nyQ9abTxpX6zneFioI4hMR\nK5Lp7dmEq0L4ukPKNzyVyFq3iDSxQSGwD4jyvnLXV5WktOrdi/XJhlV+P5wZjorI\n4USeKIrb1QpHKxAv81w45bdutV6E3ha45FDs/pl+x4uU1MjihGGaWb5BG6CigpQx\niOy3c9LTAgMBAAECggEABqvyip6mE2ERDcpEn8wuHMklF4A4U8+MQyzUlT4PsBtH\n771mXhab80Ee2OjIyUOnGnA4ClaCd+UbWw8pZqCQndwunaqndbvpig90EfPeo6eW\nZ0DQkxDpKMHXJff/drGhnLtE44bFZZpHZdNuD2vtxOYL0yq8Bq+6Ykw0SiuqKW5G\n4VTzdyh4bcitZOHIoWmpNiUtEatCsM4vHFrlDnBzrjJA4iNDcYT71YVN/PoKpHW9\ng98SyZc5OZc9eR+bCEbrh6kmo0to5qFDfgQg8hPWJdZlnorlqKBrc+3wYbIV5xAU\nv3TYv20/LFCMjRaj4N/JC2LNvC3c2uG40TK+ieonkQKBgQDcPK9cjOlRgD2PSETe\nzhcTmr3m/Sv4X68N+p2UgOAqgdZe7SBC32vTvap7ZAnFDq7UCibaTJvEA6D6jS/S\nzYcm/Qhba5V5KCw8Om5vg/FuTfDZlejZdn1SF/DjkHBfhX9DIV0aiDWT7xF4vRUb\nLY7uQN0Z9sAb3pHoH359oarnMQKBgQDWflBTjhIIhgPf1H2I/Fi/uUy9efivvHGj\nTte9jOv2WvHx4trRkLKFsLijY0O0Ic0Gi8D14iZ79duMaciaGdsEbog1VqugwDVL\njhyDS0nwq94XM5tTIuY67MjuDaYBTerCI7MN9RKj1TXz+4sRGhD0mbudpdtFlvzA\nSFL0+6whQwKBgHNb9h7sUGo4WgZrPGfYW44RR9duVVHMDM2tsEzRFJovWDJw0q00\nii5m8p2fUN6/SiQXDTLbXdvWasPSoHIy5dAuSepY9/p2aHVDxgTzf8rfWIEgXM9L\nmWke0TbhuXrPWlG3cCUto6LRXr13jU6nFm8F2sp2zTnL43FKzd7Qh8yBAoGBAKxD\nggu4/C6wQwhOxgtwb257SXCbNukctT9tIMNxHEkcvVeA1DCev2GzjnZaUJOo2dq5\n/tz7JeFEkXDxvFRXE5k5lFcSJoDSHXtyxN+FZfrObW3A2qwoSTNl2/GkMIC3rSUC\nOtmoy7GcmNo8WXIAt0Fa/l0cSUBYhOGAtG9geNu1AoGAbW0ALd0mTndEA+9/iKsI\nrU8TZGnOIWXjlVPXJG6XT+GXmPfk9h32/HMOtrEqeBW68NuKy2jjBz8w2+K+CUgr\nGoEfY/I/aS8Fb5xqlfdRvG3WCS8jY4r40R/fWTNk4dxW87lYsIzqKdLnEPUH2lNZ\npczLCyEQ1rtJqDN/6AWNKFE=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@lawyers-appointment.iam.gserviceaccount.com",
+  "client_id": "107817389271511746799",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40lawyers-appointment.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
