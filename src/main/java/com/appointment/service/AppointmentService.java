@@ -45,7 +45,7 @@ public class AppointmentService {
                 .appointmentDate(appointmentDTO.getAppointmentDate())
                 .lawyerId(appointmentDTO.getLawyerId())
                 .startTime(appointmentDTO.getStartTime())
-                .endTime(appointmentDTO.getEndTime())
+                .endTime(appointmentDTO.getStartTime().plusMinutes(30))
                 .build();
 
         boolean isAppointmentAvailable = profileServiceClient.checkAppointmentAvailability(availabilityCheckRequestDTO);
@@ -61,7 +61,7 @@ public class AppointmentService {
                 .findByLawyerIdAndDayOfWeek(appointmentDTO.getLawyerId(), requestedDayOfWeek.getValue());
 
         for (Appointment existing : existingAppointments) {
-            boolean overlaps = !(appointmentDTO.getEndTime().isBefore(existing.getStartTime())
+            boolean overlaps = !(appointmentDTO.getStartTime().plusMinutes(30).isBefore(existing.getStartTime())
                     || appointmentDTO.getStartTime().isAfter(existing.getEndTime()));
             if (overlaps) {
                 throw new ApiException("An appointment already exists for the specified time slot.", "APPOINTMENT_ALREADY_EXISTS", HttpStatus.BAD_REQUEST);
@@ -79,7 +79,7 @@ public class AppointmentService {
                 .lawyerId(appointmentDTO.getLawyerId())
                 .appointmentDate(appointmentDTO.getAppointmentDate())
                 .startTime(appointmentDTO.getStartTime())
-                .endTime(appointmentDTO.getEndTime())
+                .endTime(appointmentDTO.getStartTime().plusMinutes(30))
                 .description(appointmentDTO.getDescription())
                 .status(AppointmentStatus.BOOKED)
                 .appointmentType(type)

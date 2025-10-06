@@ -10,55 +10,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.security.SignatureException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-//    @ExceptionHandler(Exception.class)
-//    public ProblemDetail handleSecurityException(Exception exception) {
-//        ProblemDetail errorDetail = null;
-//        exception.printStackTrace();
-//
-//        if (exception instanceof BadCredentialsException) {
-//            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), exception.getMessage());
-//            errorDetail.setProperty("description", "The username or password is incorrect");
-//
-//            return errorDetail;
-//        }
-//
-//        if (exception instanceof AccountStatusException) {
-//            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
-//            errorDetail.setProperty("description", "The account is locked");
-//        }
-//
-//        if (exception instanceof AccessDeniedException) {
-//            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
-//            errorDetail.setProperty("description", "You are not authorized to access this resource");
-//        }
-//
-//        if (exception instanceof SignatureException) {
-//            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
-//            errorDetail.setProperty("description", "The JWT signature is invalid");
-//        }
-//
-//        if (exception instanceof ExpiredJwtException) {
-//            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
-//            errorDetail.setProperty("description", "The JWT token has expired");
-//        }
-//
-//        if (errorDetail == null) {
-//            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), exception.getMessage());
-//            errorDetail.setProperty("description", "Unknown internal server error.");
-//        }
-//
-//        return errorDetail;
-//    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException ex, HttpServletRequest request) {
@@ -104,6 +68,32 @@ public class GlobalExceptionHandler {
         errorBody.put("status", ex.getStatus().value());
 
         return new ResponseEntity<>(errorBody, ex.getStatus());
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<?> handleUsernameNotFound(UsernameNotFoundException ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<?> handleIllegalState(IllegalStateException ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<?> handleGeneric(RuntimeException ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request.getRequestURI());
+    }
+
+    private ResponseEntity<?> buildErrorResponse(HttpStatus status, String message, String path) {
+        Map<String, Object> error = new LinkedHashMap<>();
+        error.put("timestamp", Instant.now().toString());
+        error.put("status", status.value());
+        error.put("error", status.getReasonPhrase());
+        error.put("message", message);
+        error.put("path", path);
+
+        return ResponseEntity.status(status).body(error);
     }
 
 //    @ExceptionHandler(Exception.class)
