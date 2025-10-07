@@ -136,11 +136,11 @@ public class AppointmentService {
     }
 
     @Transactional
-    public List<String> getAvailableLawyersForOpenAppointment(String customerId, AppointmentOpenRequestDTO appointmentOpenRequestDTO) {
+    public List<String> getAvailableLawyersForOpenAppointment(String authUserId, AppointmentOpenRequestDTO appointmentOpenRequestDTO) {
 
         // Step 1: Customer existence check
-        if (!profileServiceClient.isCustomerExist(UUID.fromString(customerId))) {
-            throw new ApiException("Invalid or unapproved customer.", "INVALID_CUSTOMER_ID", HttpStatus.BAD_REQUEST);
+        if (!profileServiceClient.isCustomerExist(UUID.fromString(authUserId))) {
+            throw new ApiException("Invalid or Unapproved customer.", "INVALID_CUSTOMER_AUTH_ID", HttpStatus.BAD_REQUEST);
         }
 
         // Step 2: Prepare request for profile service

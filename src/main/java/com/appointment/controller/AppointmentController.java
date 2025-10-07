@@ -47,8 +47,8 @@ public class AppointmentController {
             @RequestBody AppointmentOpenRequestDTO appointmentOpenRequestDTO,
             Authentication authentication
     ) {
-        String customerId = authentication.getName();
-        return ResponseEntity.ok(appointmentService.getAvailableLawyersForOpenAppointment(customerId, appointmentOpenRequestDTO));
+        String authUserId = (String) authentication.getPrincipal();
+        return ResponseEntity.ok(appointmentService.getAvailableLawyersForOpenAppointment(authUserId, appointmentOpenRequestDTO));
     }
 
     @PatchMapping("/{appointmentId}/accept")
