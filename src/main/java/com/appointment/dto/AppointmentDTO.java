@@ -13,6 +13,6 @@ public class AppointmentDTO {
     private LocalDate appointmentDate;
     private LocalTime startTime;
     private String description;
-    private Long appointmentTypeId;
+    private String appointmentType;
     private DayOfWeek day;
 }

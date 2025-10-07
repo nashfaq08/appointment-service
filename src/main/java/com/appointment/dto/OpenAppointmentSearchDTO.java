@@ -10,7 +10,7 @@ import java.time.LocalTime;
 @Data
 public class OpenAppointmentSearchDTO {
 
-    private Long appointmentTypeId;
+    private String appointmentType;
     private LocalDate appointmentDate;
     private LocalTime startTime;
     private LocalTime endTime;

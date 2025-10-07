@@ -71,8 +71,8 @@ public class AppointmentService {
         // Step 4: Prepare and save
         UUID custId = UUID.fromString(customerId);
 
-        AppointmentType type = appointmentTypeRepository.findById(appointmentDTO.getAppointmentTypeId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type ID"));
+        AppointmentType appointmentType = appointmentTypeRepository.findByName(appointmentDTO.getAppointmentType())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type"));
 
         Appointment appointment = Appointment.builder()
                 .customerId(custId)
@@ -82,7 +82,7 @@ public class AppointmentService {
                 .endTime(appointmentDTO.getStartTime().plusMinutes(30))
                 .description(appointmentDTO.getDescription())
                 .status(AppointmentStatus.BOOKED)
-                .appointmentType(type)
+                .appointmentType(appointmentType)
                 .build();
 
         return appointmentRepository.save(appointment);
@@ -98,7 +98,7 @@ public class AppointmentService {
 
         // Step 2: Prepare request for profile service
         OpenAppointmentSearchDTO openAppointmentSearchDTO = OpenAppointmentSearchDTO.builder()
-                        .appointmentTypeId(appointmentOpenRequestDTO.getAppointmentTypeId())
+                        .appointmentType(appointmentOpenRequestDTO.getAppointmentType())
                         .appointmentDate(appointmentOpenRequestDTO.getAppointmentDate())
                         .startTime(appointmentOpenRequestDTO.getStartTime())
                         .endTime(appointmentOpenRequestDTO.getEndTime())
@@ -115,8 +115,8 @@ public class AppointmentService {
         // Select the first available lawyer (you can improve this logic later)
         UUID selectedLawyerId = UUID.fromString(String.valueOf(availableLawyers.get(0)));
 
-        AppointmentType type = appointmentTypeRepository.findById(appointmentOpenRequestDTO.getAppointmentTypeId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type ID"));
+        AppointmentType type = appointmentTypeRepository.findByName(appointmentOpenRequestDTO.getAppointmentType())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type"));
 
         // Step 5: Save the appointment
         Appointment appointment = Appointment.builder()
@@ -145,7 +145,7 @@ public class AppointmentService {
 
         // Step 2: Prepare request for profile service
         OpenAppointmentSearchDTO openAppointmentSearchDTO = OpenAppointmentSearchDTO.builder()
-                .appointmentTypeId(appointmentOpenRequestDTO.getAppointmentTypeId())
+                .appointmentType(appointmentOpenRequestDTO.getAppointmentType())
                 .appointmentDate(appointmentOpenRequestDTO.getAppointmentDate())
                 .startTime(appointmentOpenRequestDTO.getStartTime())
                 .endTime(appointmentOpenRequestDTO.getEndTime())
