@@ -2,6 +2,8 @@ package com.appointment.client;
 
 import com.appointment.dto.AvailabilityCheckRequestDTO;
 import com.appointment.dto.OpenAppointmentSearchDTO;
+import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class ProfileServiceClient {
 
@@ -37,9 +40,13 @@ public class ProfileServiceClient {
 
         String url = profileServiceUrl + "/internal/appointmentAvailability";
 
+        log.info("Calling appointment availability URL {}", url);
+
         ResponseEntity<Boolean> response = restTemplate.exchange(
                 url, HttpMethod.POST, entity, Boolean.class
         );
+
+        log.info("Response received from profile service for appointment availability {}", response);
 
         return response.getBody() != null && response.getBody();
     }
@@ -73,10 +80,15 @@ public class ProfileServiceClient {
 
         String url = profileServiceUrl + "/internal/customer/" + customerId + "/exists";
 
+        log.info("Calling customer existence URL from profile service {}", url);
+
         try {
             ResponseEntity<Boolean> response = restTemplate.exchange(
                     url, HttpMethod.GET, requestEntity, Boolean.class
             );
+
+            log.info("Received response from profile service {}", response);
+
             return Boolean.TRUE.equals(response.getBody());
         } catch (HttpClientErrorException e) {
             return false;
