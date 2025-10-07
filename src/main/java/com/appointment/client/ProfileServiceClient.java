@@ -57,7 +57,11 @@ public class ProfileServiceClient {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("X-Internal-Secret", internalServiceSecret);
 
+        log.info("Sending request to profile service: {}", openAppointmentSearchDTO);
+
         String url = profileServiceUrl + "/internal/searchLawyersBySpecialityAndAvailability";
+
+        log.info("Calling searchLawyersBySpecialityAndAvailability URL: {}", url);
 
         HttpEntity<OpenAppointmentSearchDTO> entity = new HttpEntity<>(openAppointmentSearchDTO, headers);
 
@@ -67,6 +71,8 @@ public class ProfileServiceClient {
                 entity,
                 List.class
         );
+
+        log.info("Response received from profile service for searchLawyersBySpecialityAndAvailability: {}", response);
 
         return response.getBody();
     }
@@ -80,14 +86,14 @@ public class ProfileServiceClient {
 
         String url = profileServiceUrl + "/internal/customer/" + customerId + "/exists";
 
-        log.info("Calling customer existence URL from profile service {}", url);
+        log.info("Calling customer existence URL from profile service: {}", url);
 
         try {
             ResponseEntity<Boolean> response = restTemplate.exchange(
                     url, HttpMethod.GET, requestEntity, Boolean.class
             );
 
-            log.info("Received response from profile service {}", response);
+            log.info("Received response from profile service: {}", response);
 
             return Boolean.TRUE.equals(response.getBody());
         } catch (HttpClientErrorException e) {
