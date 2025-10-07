@@ -70,32 +70,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorBody, ex.getStatus());
     }
 
-    @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<?> handleUsernameNotFound(UsernameNotFoundException ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI());
-    }
-
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<?> handleIllegalState(IllegalStateException ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
-    }
-
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<?> handleGeneric(RuntimeException ex, HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request.getRequestURI());
-    }
-
-    private ResponseEntity<?> buildErrorResponse(HttpStatus status, String message, String path) {
-        Map<String, Object> error = new LinkedHashMap<>();
-        error.put("timestamp", Instant.now().toString());
-        error.put("status", status.value());
-        error.put("error", status.getReasonPhrase());
-        error.put("message", message);
-        error.put("path", path);
-
-        return ResponseEntity.status(status).body(error);
-    }
-
 //    @ExceptionHandler(Exception.class)
 //    public ResponseEntity<Map<String, Object>> handleUnexpectedException(Exception ex) {
 //        Map<String, Object> errorBody = new HashMap<>();
