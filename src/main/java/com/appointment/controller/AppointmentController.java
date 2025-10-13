@@ -41,7 +41,7 @@ public class AppointmentController {
         return ResponseEntity.ok(appointment);
     }
 
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasRole('CUSTOMER') and hasRole('ADMIN')")
     @PostMapping("/getAvailableLawyers")
     public ResponseEntity<List<String>> getAvailableLawyersForOpenAppointment(
             @RequestBody AppointmentOpenRequestDTO appointmentOpenRequestDTO,
@@ -74,6 +74,15 @@ public class AppointmentController {
     @PreAuthorize("hasRole('LAWYER')")
     @GetMapping("/lawyer")
     public ResponseEntity<List<Appointment>> byLawyer(
+            Authentication authentication
+    ) {
+        String lawyerAuthUserId = authentication.getName();
+        return ResponseEntity.ok(appointmentService.getByLawyer(lawyerAuthUserId));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/getLawyers")
+    public ResponseEntity<List<Appointment>> getLawyers(
             Authentication authentication
     ) {
         String lawyerAuthUserId = authentication.getName();
