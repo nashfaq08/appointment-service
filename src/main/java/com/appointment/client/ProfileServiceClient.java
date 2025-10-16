@@ -122,5 +122,26 @@ public class ProfileServiceClient {
         }
     }
 
+    public boolean isLawyerValidByLawyerId(UUID lawyerId) {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Internal-Secret", internalServiceSecret);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        String url = profileServiceUrl + "/internal/lawyer/" + lawyerId + "/exists";
+
+        try {
+            ResponseEntity<Boolean> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    requestEntity,
+                    Boolean.class
+            );
+            return Boolean.TRUE.equals(response.getBody());
+        } catch (HttpClientErrorException | HttpServerErrorException ex) {
+            return false;
+        }
+    }
+
 
 }

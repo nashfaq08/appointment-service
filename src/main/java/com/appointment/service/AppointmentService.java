@@ -199,7 +199,7 @@ public class AppointmentService {
     }
 
     public List<Appointment> getAppointmentsByLawyerId(UUID lawyerId) {
-        if (!profileServiceClient.isLawyerValid(lawyerId)) {
+        if (!profileServiceClient.isLawyerValidByLawyerId(lawyerId)) {
             throw new ApiException("lawyer not authorized to list the appointments.", "LAWYER_NOT_AUTHORIZED", HttpStatus.UNAUTHORIZED);
         }
         return appointmentRepository.findAllByLawyerId(lawyerId);
