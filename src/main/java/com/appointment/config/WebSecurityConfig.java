@@ -28,6 +28,11 @@ public class WebSecurityConfig {
     }
 
     @Bean
+    public InternalApiAuthFilter internalApiAuthFilter() {
+        return new InternalApiAuthFilter();
+    }
+
+    @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration authenticationConfiguration
     ) throws Exception {
@@ -52,10 +57,12 @@ public class WebSecurityConfig {
                 )
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
+                                .requestMatchers("/internal/**").hasAuthority("INTERNAL_SERVICE")
                                 .requestMatchers("/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                                 .anyRequest().authenticated()
                 );
 
+        http.addFilterBefore(internalApiAuthFilter(), UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
