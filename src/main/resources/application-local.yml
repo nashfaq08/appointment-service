@@ -45,4 +45,8 @@ jwt:
 
 service:
   profile-url: "http://localhost:8081"
-  internal-secret: "abcd1234"
+  internal-secret: "VMY0qcWu+mDK4o4ggmwZxg=="
+
+internal:
+  api:
+    secret: "VMY0qcWu+mDK4o4ggmwZxg=="
