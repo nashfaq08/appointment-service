@@ -46,7 +46,7 @@ public class ProfileServiceClient {
                 url, HttpMethod.POST, entity, Boolean.class
         );
 
-        log.info("Response received from profile service for appointment availability {}", response);
+        log.info("Response received from profile service for appointment availability {}", response.getBody());
 
         return response.getBody() != null && response.getBody();
     }

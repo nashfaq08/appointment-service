@@ -2,24 +2,22 @@ package com.appointment.service;
 
 import com.appointment.client.ProfileServiceClient;
 import com.appointment.constants.AppointmentStatus;
-import com.appointment.dto.AppointmentDTO;
-import com.appointment.dto.AppointmentOpenRequestDTO;
-import com.appointment.dto.AvailabilityCheckRequestDTO;
-import com.appointment.dto.OpenAppointmentSearchDTO;
+import com.appointment.dto.*;
 import com.appointment.entities.Appointment;
 import com.appointment.entities.AppointmentType;
+import com.appointment.entities.Transaction;
 import com.appointment.exception.ApiException;
 import com.appointment.repositories.AppointmentRepository;
 import com.appointment.repositories.AppointmentTypeRepository;
+import com.appointment.repositories.TransactionRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,8 +26,10 @@ import java.util.UUID;
 @Slf4j
 public class AppointmentService {
 
+    private final NotificationService notificationService;
     private final AppointmentRepository appointmentRepository;
     private final AppointmentTypeRepository appointmentTypeRepository;
+    private final TransactionRepository transactionRepository;
     private final ProfileServiceClient profileServiceClient;
 
     @Transactional
@@ -84,8 +84,79 @@ public class AppointmentService {
                 .status(AppointmentStatus.BOOKED)
                 .appointmentType(appointmentType)
                 .build();
-
         return appointmentRepository.save(appointment);
+    }
+
+    @Transactional
+    public Appointment bookAppointment(String customerId, StripeDTO stripeDTO) {
+
+        // Step 1: Customer existence check
+        if (!profileServiceClient.isCustomerExist(UUID.fromString(customerId))) {
+            throw new ApiException("Invalid or unapproved customer.", "INVALID_CUSTOMER_ID", HttpStatus.BAD_REQUEST);
+        }
+
+        // Step 2: Check availability via Profile service
+        AvailabilityCheckRequestDTO availabilityCheckRequestDTO = AvailabilityCheckRequestDTO.builder()
+                .appointmentDate(LocalDate.parse(stripeDTO.getAppointmentDate()))
+                .lawyerId(stripeDTO.getLawyerId())
+                .startTime(LocalTime.parse(stripeDTO.getStartTime()))
+                .endTime(LocalTime.parse(stripeDTO.getStartTime()).plusMinutes(30))
+                .build();
+
+        boolean isAppointmentAvailable = profileServiceClient.checkAppointmentAvailability(availabilityCheckRequestDTO);
+
+        if (!isAppointmentAvailable) {
+            throw new ApiException("The selected time slot is not available for the specified lawyer.", "TIME_SLOT_NOT_AVAILABLE", HttpStatus.NOT_FOUND);
+        }
+
+        // Step 3: Check if appointment overlaps with existing ones on the same weekday
+        DayOfWeek requestedDayOfWeek = LocalDate.parse(stripeDTO.getAppointmentDate()).getDayOfWeek();
+
+        List<Appointment> existingAppointments = appointmentRepository
+                .findByLawyerIdAndDayOfWeek(stripeDTO.getLawyerId(), requestedDayOfWeek.getValue());
+
+        for (Appointment existing : existingAppointments) {
+            boolean overlaps = !(LocalTime.parse(stripeDTO.getStartTime()).plusMinutes(30).isBefore(existing.getStartTime())
+                    || LocalTime.parse(stripeDTO.getStartTime()).isAfter(existing.getEndTime()));
+            if (overlaps) {
+                throw new ApiException("An appointment already exists for the specified time slot.", "APPOINTMENT_ALREADY_EXISTS", HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        // Step 4: Prepare and save
+        UUID custId = UUID.fromString(customerId);
+
+        AppointmentType appointmentType = appointmentTypeRepository.findByName(stripeDTO.getAppointmentTypeId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type"));
+
+        Appointment savedAppointment = Appointment.builder()
+                .customerId(custId)
+                .lawyerId(stripeDTO.getLawyerId())
+                .appointmentDate(LocalDate.parse(stripeDTO.getAppointmentDate()))
+                .startTime(LocalTime.parse(stripeDTO.getStartTime()))
+                .endTime(LocalTime.parse(stripeDTO.getStartTime()).plusMinutes(30))
+                .description(stripeDTO.getDescription())
+                .status(AppointmentStatus.PENDING)
+                .appointmentType(appointmentType)
+                .build();
+        appointmentRepository.save(savedAppointment);
+
+        Transaction savedTransaction = Transaction.builder()
+                .appointment(savedAppointment)
+                .amountTotal(stripeDTO.getAmount_total())
+                .currency(stripeDTO.getCurrency())
+                .paymentStatus(stripeDTO.getPayment_status())
+                .id(stripeDTO.getPayment_transaction_id())
+                .paymentMethodType(String.join(",", stripeDTO.getPayment_method_types()))
+                .customerDetails(new ObjectMapper().valueToTree(stripeDTO.getCustomer_details()).toString())
+                .createdAt(Instant.ofEpochSecond(stripeDTO.getCreated()).atZone(ZoneId.systemDefault()).toLocalDateTime())
+                .build();
+
+        transactionRepository.save(savedTransaction);
+
+        log.info("Appointment booked and transaction recorded for user {}", stripeDTO.getCustomer_details().getEmail());
+
+        return savedAppointment;
     }
 
     @Transactional

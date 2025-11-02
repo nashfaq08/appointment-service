@@ -2,6 +2,7 @@ package com.appointment.controller;
 
 import com.appointment.dto.AppointmentDTO;
 import com.appointment.dto.AppointmentOpenRequestDTO;
+import com.appointment.dto.StripeDTO;
 import com.appointment.dto.response.ApiResponse;
 import com.appointment.entities.Appointment;
 import com.appointment.service.AppointmentService;
@@ -21,13 +22,23 @@ public class AppointmentController {
     private final AppointmentService appointmentService;
 
     @PreAuthorize("hasRole('CUSTOMER')")
-    @PostMapping("/book")
+    @PostMapping("/bookv1")
     public ResponseEntity<Appointment> bookAppointment(
             @RequestBody AppointmentDTO appointmentDTO,
             Authentication authentication
     ) {
         String customerId = authentication.getName();
         return ResponseEntity.ok(appointmentService.bookAppointment(customerId, appointmentDTO));
+    }
+
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @PostMapping("/book")
+    public ResponseEntity<Appointment> bookAppointmentv1(
+            @RequestBody StripeDTO stripeDTO,
+            Authentication authentication
+    ) {
+        String customerId = authentication.getName();
+        return ResponseEntity.ok(appointmentService.bookAppointment(customerId, stripeDTO));
     }
 
     @PreAuthorize("hasRole('CUSTOMER')")
