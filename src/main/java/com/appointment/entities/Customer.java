@@ -5,7 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.UuidGenerator;
+
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -15,9 +18,8 @@ import java.util.List;
 public class Customer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")  // aligns with DB: customer(id)
-    private Long id;
+    @UuidGenerator
+    private UUID id;
 
     @Column(name = "name", nullable = false)
     private String name;

@@ -20,7 +20,7 @@ spring:
     database: POSTGRESQL
     show-sql: false
     hibernate:
-      ddl-auto: none
+      ddl-auto: create-drop
     properties:
       hibernate:
         types:
@@ -46,3 +46,7 @@ jwt:
 service:
   profile-url: "http://localhost:9212"
   internal-secret: "VMY0qcWu+mDK4o4ggmwZxg=="
+
+internal:
+  api:
+    secret: "VMY0qcWu+mDK4o4ggmwZxg=="

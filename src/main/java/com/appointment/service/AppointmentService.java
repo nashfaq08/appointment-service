@@ -88,12 +88,12 @@ public class AppointmentService {
     }
 
     @Transactional
-    public Appointment bookAppointment(String customerId, StripeDTO stripeDTO) {
+    public Appointment bookAppointment(StripeDTO stripeDTO) {
 
         // Step 1: Customer existence check
-        if (!profileServiceClient.isCustomerExist(UUID.fromString(customerId))) {
-            throw new ApiException("Invalid or unapproved customer.", "INVALID_CUSTOMER_ID", HttpStatus.BAD_REQUEST);
-        }
+//        if (!profileServiceClient.isCustomerExist(UUID.fromString(stripeDTO.getCustomer_details().getId()))) {
+//            throw new ApiException("Invalid or unapproved customer.", "INVALID_CUSTOMER_ID", HttpStatus.BAD_REQUEST);
+//        }
 
         // Step 2: Check availability via Profile service
         AvailabilityCheckRequestDTO availabilityCheckRequestDTO = AvailabilityCheckRequestDTO.builder()
@@ -124,13 +124,13 @@ public class AppointmentService {
         }
 
         // Step 4: Prepare and save
-        UUID custId = UUID.fromString(customerId);
+        UUID customerId = UUID.fromString(stripeDTO.getCustomer_details().getId());
 
         AppointmentType appointmentType = appointmentTypeRepository.findByName(stripeDTO.getAppointmentTypeId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type"));
 
         Appointment savedAppointment = Appointment.builder()
-                .customerId(custId)
+                .customerId(customerId)
                 .lawyerId(stripeDTO.getLawyerId())
                 .appointmentDate(LocalDate.parse(stripeDTO.getAppointmentDate()))
                 .startTime(LocalTime.parse(stripeDTO.getStartTime()))
@@ -146,9 +146,9 @@ public class AppointmentService {
                 .amountTotal(stripeDTO.getAmount_total())
                 .currency(stripeDTO.getCurrency())
                 .paymentStatus(stripeDTO.getPayment_status())
-                .id(stripeDTO.getPayment_transaction_id())
+                .paymentTransactionId(stripeDTO.getPayment_transaction_id())
                 .paymentMethodType(String.join(",", stripeDTO.getPayment_method_types()))
-                .customerDetails(new ObjectMapper().valueToTree(stripeDTO.getCustomer_details()).toString())
+                .customerDetails(new ObjectMapper().valueToTree(stripeDTO.getCustomer_details()))
                 .createdAt(Instant.ofEpochSecond(stripeDTO.getCreated()).atZone(ZoneId.systemDefault()).toLocalDateTime())
                 .build();
 

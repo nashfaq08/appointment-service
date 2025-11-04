@@ -1,8 +1,15 @@
 package com.appointment.entities;
 
+import com.appointment.config.JsonConverter;
+import com.appointment.dto.StripeDTO;
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -10,11 +17,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Transaction {
+public class Transaction implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @UuidGenerator
+    private UUID id;
 
     private Long amountSubtotal;
     private Long amountTotal;
@@ -27,7 +34,9 @@ public class Transaction {
     private String mode;
 
     @Column(columnDefinition = "jsonb")
-    private String customerDetails;
+    @Convert(converter = JsonConverter.class)
+    @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
+    private JsonNode customerDetails;
 
     private LocalDateTime createdAt;
 
@@ -35,4 +44,3 @@ public class Transaction {
     @JoinColumn(name = "appointment_id")
     private Appointment appointment;
 }
-

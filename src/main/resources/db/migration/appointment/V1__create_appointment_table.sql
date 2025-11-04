@@ -1,5 +1,5 @@
 CREATE TABLE appointment (
-             id SERIAL PRIMARY KEY,
+             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
              customer_id UUID NOT NULL,
              lawyer_id UUID NOT NULL,

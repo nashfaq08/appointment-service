@@ -1,5 +1,6 @@
 package com.appointment.controller;
 
+import com.appointment.dto.StripeDTO;
 import com.appointment.entities.Appointment;
 import com.appointment.service.AppointmentService;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -8,10 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,5 +29,13 @@ public class InternalController {
             @PathVariable UUID lawyerId
     ) {
         return ResponseEntity.ok(appointmentService.getAppointmentsByLawyerId(lawyerId));
+    }
+
+    @PreAuthorize("hasAuthority('INTERNAL_SERVICE')")
+    @PostMapping("/book")
+    public ResponseEntity<Appointment> bookAppointmentv1(
+            @RequestBody StripeDTO stripeDTO
+    ) {
+        return ResponseEntity.ok(appointmentService.bookAppointment(stripeDTO));
     }
 }

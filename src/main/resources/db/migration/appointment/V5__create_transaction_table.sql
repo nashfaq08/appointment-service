@@ -1,5 +1,5 @@
 CREATE TABLE transaction (
-                             id SERIAL PRIMARY KEY,
+                             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                              amount_subtotal BIGINT,
                              amount_total BIGINT,
                              currency VARCHAR(10),
@@ -11,5 +11,5 @@ CREATE TABLE transaction (
                              mode VARCHAR(50),
                              customer_details JSONB,
                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                             appointment_id BIGINT UNIQUE REFERENCES appointment(id)
+                             appointment_id UUID UNIQUE REFERENCES appointment(id) ON DELETE CASCADE
 );

@@ -15,7 +15,7 @@ public class StripeDTO {
     private String status;
     private Long created;
     private String client_reference_id;
-    private Long payment_transaction_id;
+    private String payment_transaction_id;
     private List<String> payment_method_types;
     private boolean livemode;
     private String mode;
@@ -32,6 +32,7 @@ public class StripeDTO {
 
     @Data
     public static class CustomerDetails {
+        private String id;
         private String email;
         private String name;
         private Address address;
