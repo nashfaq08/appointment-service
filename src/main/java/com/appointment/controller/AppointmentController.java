@@ -31,15 +31,15 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.bookAppointment(customerId, appointmentDTO));
     }
 
-//    @PreAuthorize("hasRole('CUSTOMER')")
-//    @PostMapping("/book")
-//    public ResponseEntity<Appointment> bookAppointmentv1(
-//            @RequestBody StripeDTO stripeDTO,
-//            Authentication authentication
-//    ) {
-//        String customerId = authentication.getName();
-//        return ResponseEntity.ok(appointmentService.bookAppointment(customerId, stripeDTO));
-//    }
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @PostMapping("/book")
+    public ResponseEntity<Appointment> bookAppointmentv1(
+            @RequestBody StripeDTO stripeDTO,
+            Authentication authentication
+    ) {
+        String customerId = authentication.getName();
+        return ResponseEntity.ok(appointmentService.bookAppointment(customerId, stripeDTO));
+    }
 
     @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping("/book/openAppointment")

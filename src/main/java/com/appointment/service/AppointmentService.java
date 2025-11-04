@@ -88,6 +88,90 @@ public class AppointmentService {
     }
 
     @Transactional
+    public Appointment bookAppointment(String customerId, StripeDTO stripeDTO) {
+
+        log.info("Starting to book the appointment after payment has been successfully charged");
+
+        // Step 1: Customer existence check
+        if (!profileServiceClient.isCustomerExist(UUID.fromString(customerId))) {
+            throw new ApiException("Invalid or unapproved customer.", "INVALID_CUSTOMER_ID", HttpStatus.BAD_REQUEST);
+        }
+
+        log.info("Checking the appointment availablity according to the selected lawyer schedule");
+
+        // Step 2: Check availability via Profile service
+        AvailabilityCheckRequestDTO availabilityCheckRequestDTO = AvailabilityCheckRequestDTO.builder()
+                .appointmentDate(LocalDate.parse(stripeDTO.getAppointmentDate()))
+                .lawyerId(stripeDTO.getLawyerId())
+                .startTime(LocalTime.parse(stripeDTO.getStartTime()))
+                .endTime(LocalTime.parse(stripeDTO.getStartTime()).plusMinutes(30))
+                .build();
+
+        boolean isAppointmentAvailable = profileServiceClient.checkAppointmentAvailability(availabilityCheckRequestDTO);
+
+        if (!isAppointmentAvailable) {
+            throw new ApiException("The selected time slot is not available for the specified lawyer.", "TIME_SLOT_NOT_AVAILABLE", HttpStatus.NOT_FOUND);
+        }
+
+        // Step 3: Check if appointment overlaps with existing ones on the same weekday
+        DayOfWeek requestedDayOfWeek = LocalDate.parse(stripeDTO.getAppointmentDate()).getDayOfWeek();
+
+        log.info("Checking if the selected lawyer has any existing appointments");
+
+        List<Appointment> existingAppointments = appointmentRepository
+                .findByLawyerIdAndDayOfWeek(stripeDTO.getLawyerId(), requestedDayOfWeek.getValue());
+
+        for (Appointment existing : existingAppointments) {
+            boolean overlaps = !(LocalTime.parse(stripeDTO.getStartTime()).plusMinutes(30).isBefore(existing.getStartTime())
+                    || LocalTime.parse(stripeDTO.getStartTime()).isAfter(existing.getEndTime()));
+            if (overlaps) {
+                throw new ApiException("An appointment already exists for the specified time slot.", "APPOINTMENT_ALREADY_EXISTS", HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        // Step 4: Prepare and save
+        UUID custId = UUID.fromString(stripeDTO.getCustomer_details().getId());
+
+        log.info("Fetching the appointment type based on the given type name");
+
+        AppointmentType appointmentType = appointmentTypeRepository.findByName(stripeDTO.getAppointmentTypeId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type"));
+
+        log.info("Storing the apppointment record in the database");
+
+        Appointment savedAppointment = Appointment.builder()
+                .customerId(custId)
+                .lawyerId(stripeDTO.getLawyerId())
+                .appointmentDate(LocalDate.parse(stripeDTO.getAppointmentDate()))
+                .startTime(LocalTime.parse(stripeDTO.getStartTime()))
+                .endTime(LocalTime.parse(stripeDTO.getStartTime()).plusMinutes(30))
+                .description(stripeDTO.getDescription())
+                .status(AppointmentStatus.PENDING)
+                .appointmentType(appointmentType)
+                .build();
+        appointmentRepository.save(savedAppointment);
+
+        log.info("Appointment saved successfully, Storing the transaction record in the database");
+
+        Transaction savedTransaction = Transaction.builder()
+                .appointment(savedAppointment)
+                .amountTotal(stripeDTO.getAmount_total())
+                .currency(stripeDTO.getCurrency())
+                .paymentStatus(stripeDTO.getPayment_status())
+                .paymentTransactionId(stripeDTO.getPayment_transaction_id())
+                .paymentMethodType(String.join(",", stripeDTO.getPayment_method_types()))
+                .customerDetails(new ObjectMapper().valueToTree(stripeDTO.getCustomer_details()))
+                .createdAt(Instant.ofEpochSecond(stripeDTO.getCreated()).atZone(ZoneId.systemDefault()).toLocalDateTime())
+                .build();
+
+        transactionRepository.save(savedTransaction);
+
+        log.info("Appointment booked and transaction recorded for user {}", stripeDTO.getCustomer_details().getEmail());
+
+        return savedAppointment;
+    }
+
+    @Transactional
     public Appointment bookAppointment(StripeDTO stripeDTO) {
 
         // Step 1: Customer existence check
