@@ -31,11 +31,11 @@ public class InternalController {
         return ResponseEntity.ok(appointmentService.getAppointmentsByLawyerId(lawyerId));
     }
 
-    @PreAuthorize("hasAuthority('INTERNAL_SERVICE')")
-    @PostMapping("/book")
-    public ResponseEntity<Appointment> bookAppointmentv1(
-            @RequestBody StripeDTO stripeDTO
-    ) {
-        return ResponseEntity.ok(appointmentService.bookAppointment(stripeDTO));
-    }
+//    @PreAuthorize("hasAuthority('INTERNAL_SERVICE')")
+//    @PostMapping("/book")
+//    public ResponseEntity<Appointment> bookAppointmentv1(
+//            @RequestBody StripeDTO stripeDTO
+//    ) {
+//        return ResponseEntity.ok(appointmentService.bookAppointment(stripeDTO));
+//    }
 }

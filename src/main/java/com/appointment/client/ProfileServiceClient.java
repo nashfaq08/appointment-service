@@ -1,6 +1,7 @@
 package com.appointment.client;
 
 import com.appointment.dto.AvailabilityCheckRequestDTO;
+import com.appointment.dto.CustomerDTO;
 import com.appointment.dto.OpenAppointmentSearchDTO;
 import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
@@ -77,14 +78,14 @@ public class ProfileServiceClient {
         return response.getBody();
     }
 
-    public boolean isCustomerExist(UUID customerId) {
+    public boolean isCustomerExist(UUID customerAuthId) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("X-Internal-Secret", internalServiceSecret);
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
-        String url = profileServiceUrl + "/internal/customer/" + customerId + "/exists";
+        String url = profileServiceUrl + "/internal/customer/" + customerAuthId + "/exists";
 
         log.info("Calling customer existence URL from profile service: {}", url);
 
@@ -98,6 +99,30 @@ public class ProfileServiceClient {
             return Boolean.TRUE.equals(response.getBody());
         } catch (HttpClientErrorException e) {
             return false;
+        }
+    }
+
+    public CustomerDTO fetchCustomerIfExists(UUID customerId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Internal-Secret", internalServiceSecret);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        String url = profileServiceUrl + "/internal/customer/" + customerId + "/details";
+
+        try {
+            ResponseEntity<CustomerDTO> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    requestEntity,
+                    CustomerDTO.class
+            );
+
+            log.info("Received response from profile service: {}", response.getBody());
+
+            return response.getBody();
+        } catch (HttpClientErrorException.NotFound e) {
+            return null;
         }
     }
 

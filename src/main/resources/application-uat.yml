@@ -44,6 +44,7 @@ jwt:
   expiration: 3600000
 
 service:
+  auth-url: "http://localhost:9211"
   profile-url: "http://localhost:9212"
   internal-secret: "VMY0qcWu+mDK4o4ggmwZxg=="
 

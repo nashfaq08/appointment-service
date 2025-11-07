@@ -23,7 +23,7 @@ public class AppointmentController {
 
     @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping("/bookv1")
-    public ResponseEntity<Appointment> bookAppointment(
+    public ResponseEntity<Appointment> bookAppointmentv1(
             @RequestBody AppointmentDTO appointmentDTO,
             Authentication authentication
     ) {
@@ -33,12 +33,12 @@ public class AppointmentController {
 
     @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping("/book")
-    public ResponseEntity<Appointment> bookAppointmentv1(
+    public ResponseEntity<Appointment> bookAppointment(
             @RequestBody StripeDTO stripeDTO,
             Authentication authentication
     ) {
-        String customerId = authentication.getName();
-        return ResponseEntity.ok(appointmentService.bookAppointment(customerId, stripeDTO));
+        String customerAuthId = authentication.getName();
+        return ResponseEntity.ok(appointmentService.bookAppointment(customerAuthId, stripeDTO));
     }
 
     @PreAuthorize("hasRole('CUSTOMER')")

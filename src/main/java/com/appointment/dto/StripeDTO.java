@@ -32,7 +32,6 @@ public class StripeDTO {
 
     @Data
     public static class CustomerDetails {
-        private String id;
         private String email;
         private String name;
         private Address address;
