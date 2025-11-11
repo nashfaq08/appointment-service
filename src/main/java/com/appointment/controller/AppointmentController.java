@@ -2,6 +2,7 @@ package com.appointment.controller;
 
 import com.appointment.dto.AppointmentDTO;
 import com.appointment.dto.AppointmentOpenRequestDTO;
+import com.appointment.dto.AppointmentWithTransactionDTO;
 import com.appointment.dto.StripeDTO;
 import com.appointment.dto.response.ApiResponse;
 import com.appointment.entities.Appointment;
@@ -98,6 +99,15 @@ public class AppointmentController {
     ) {
         String lawyerAuthUserId = authentication.getName();
         return ResponseEntity.ok(appointmentService.getByLawyer(lawyerAuthUserId));
+    }
+
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @GetMapping("/transactions")
+    public ResponseEntity<List<AppointmentWithTransactionDTO>> getAppointmentsWithTransactionsByCustomer(
+            Authentication authentication
+    ) {
+        String customerAuthUserId = authentication.getName();
+        return ResponseEntity.ok(appointmentService.getAppointmentsWithTransactionsByCustomerId(UUID.fromString(customerAuthUserId)));
     }
 
 //    @GetMapping("/lawyer/{lawyerId}")
