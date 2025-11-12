@@ -101,13 +101,15 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getByLawyer(lawyerAuthUserId));
     }
 
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     @GetMapping("/transactions")
     public ResponseEntity<List<AppointmentWithTransactionDTO>> getAppointmentsWithTransactionsByCustomer(
             Authentication authentication
     ) {
         String customerAuthUserId = authentication.getName();
-        return ResponseEntity.ok(appointmentService.getAppointmentsWithTransactionsByCustomerId(UUID.fromString(customerAuthUserId)));
+        boolean hasAdminRole = authentication.getAuthorities().stream()
+                .anyMatch(r -> r.getAuthority().equals("ROLE_ADMIN"));
+        return ResponseEntity.ok(appointmentService.getAppointmentsWithTransactionsByCustomerId(UUID.fromString(customerAuthUserId), hasAdminRole));
     }
 
 //    @GetMapping("/lawyer/{lawyerId}")
