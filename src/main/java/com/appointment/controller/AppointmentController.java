@@ -53,7 +53,7 @@ public class AppointmentController {
         return ResponseEntity.ok(appointment);
     }
 
-    @PreAuthorize("hasRole('CUSTOMER') and hasRole('ADMIN')")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     @PostMapping("/getAvailableLawyers")
     public ResponseEntity<List<String>> getAvailableLawyersForOpenAppointment(
             @RequestBody AppointmentOpenRequestDTO appointmentOpenRequestDTO,
