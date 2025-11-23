@@ -108,7 +108,7 @@ public class AppointmentService {
 
         log.info("Sending the notification to the user device");
 
-        notificationService.sendNotificationToDevice(deviceToken, "Test Notification", "Test Notification");
+        notificationService.sendNotificationToDevice(deviceToken, "Appointment Booking", "A customer wants to book an appointment with you.");
 
         log.info("Checking the appointment availablity according to the selected lawyer schedule");
 
