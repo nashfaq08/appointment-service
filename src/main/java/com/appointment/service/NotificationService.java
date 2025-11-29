@@ -10,22 +10,23 @@ import java.util.List;
 public class NotificationService {
 
     public void sendNotificationToDevice(String token, String title, String message) {
-        log.info("Sending notification to device with token {}", token);
-        Notification notification = Notification.builder()
-                .setTitle(title)
-                .setBody(message)
-                .build();
-
-        log.info("Building message to contain the notification");
-        Message msg = Message.builder()
-                .setToken(token)
-                .setNotification(notification)
-                .build();
         try {
+            log.info("Sending notification to device with token {}", token);
+            Notification notification = Notification.builder()
+                    .setTitle(title)
+                    .setBody(message)
+                    .build();
+
+            log.info("Building message to contain the notification");
+            Message msg = Message.builder()
+                    .setToken(token)
+                    .setNotification(notification)
+                    .build();
+
             String response = FirebaseMessaging.getInstance().send(msg);
             log.info("Notification sent successfully {}", response);
-        } catch (FirebaseMessagingException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            log.error("Failed to send notification to token {}: {}", token, e.getMessage());
         }
     }
 

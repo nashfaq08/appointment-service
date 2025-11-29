@@ -108,7 +108,11 @@ public class AppointmentService {
 
         log.info("Sending the notification to the user device");
 
-        notificationService.sendNotificationToDevice(deviceToken, "Appointment Booking", "A customer wants to book an appointment with you.");
+        try {
+            notificationService.sendNotificationToDevice(deviceToken, "Appointment Booking", "A customer wants to book an appointment with you.");
+        } catch (Exception ex) {
+            log.error("Failed to send notification to device: {}", ex.getMessage());
+        }
 
         log.info("Checking the appointment availablity according to the selected lawyer schedule");
 
