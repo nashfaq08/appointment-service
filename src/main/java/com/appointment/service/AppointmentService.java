@@ -133,10 +133,14 @@ public class AppointmentService {
         // Step 3: Check if appointment overlaps with existing ones on the same weekday
         DayOfWeek requestedDayOfWeek = LocalDate.parse(stripeDTO.getAppointmentDate()).getDayOfWeek();
 
-        log.info("Checking if the selected lawyer has any existing appointments");
+        log.info("Checking if the selected lawyer has any existing appointments for lawyer {} on day {}", stripeDTO.getLawyerId(), requestedDayOfWeek.getValue());
 
         List<Appointment> existingAppointments = appointmentRepository
                 .findByLawyerIdAndDayOfWeek(stripeDTO.getLawyerId(), requestedDayOfWeek.getValue());
+
+        if (existingAppointments.isEmpty()) {
+            log.info("No existing appointment for lawyer {} in the given timeslot", stripeDTO.getLawyerId());
+        }
 
         for (Appointment existing : existingAppointments) {
             boolean overlaps = !(LocalTime.parse(stripeDTO.getStartTime()).plusMinutes(30).isBefore(existing.getStartTime())
@@ -154,7 +158,7 @@ public class AppointmentService {
         AppointmentType appointmentType = appointmentTypeRepository.findByName(stripeDTO.getAppointmentTypeId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type"));
 
-        log.info("Storing the apppointment record in the database");
+        log.info("Storing the apppointment record in the database for lawyer {}",  stripeDTO.getLawyerId());
 
         Appointment savedAppointment = Appointment.builder()
                 .customerId(customerDTO.getId())
