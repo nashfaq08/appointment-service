@@ -153,7 +153,7 @@ public class AppointmentService {
         // Step 4: Prepare and save
 //        UUID custId = UUID.fromString(stripeDTO.getCustomer_details().getId());
 
-        log.info("Fetching the appointment type based on the given type name");
+        log.info("Fetching the appointment type based on the given type name {}", stripeDTO.getAppointmentTypeId());
 
         AppointmentType appointmentType = appointmentTypeRepository.findByName(stripeDTO.getAppointmentTypeId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type"));
