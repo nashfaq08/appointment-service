@@ -535,6 +535,77 @@ public class AppointmentService {
         }
     }
 
+    public List<AppointmentWithTransactionDTO> getAppointmentsWithTransactionsByLawyerId(UUID lawyerAuthId, boolean adminFlag) {
+
+        log.info("Fetching the lawyer details based on lawyer auth Id {}",  lawyerAuthId);
+
+        if (!adminFlag) {
+            UUID lawyerId = profileServiceClient.fetchLawyerId(lawyerAuthId);
+            log.info("Fetching the appointment(s) details based on Lawyer Id {}", lawyerId);
+            List<Appointment> appointments = appointmentRepository.findAllByLawyerId(lawyerId);
+
+            return appointments.stream().map(appointment -> {
+                log.info("Fetching the transactions based on appointment Id {}", appointment.getId());
+                Transaction transaction = transactionRepository.findByAppointmentId(appointment.getId())
+                        .orElse(null);
+                return AppointmentWithTransactionDTO.builder()
+                        .appointmentId(appointment.getId())
+                        .customerId(appointment.getCustomerId())
+                        .lawyerId(appointment.getLawyerId())
+                        .appointmentDate(appointment.getAppointmentDate())
+                        .startTime(appointment.getStartTime())
+                        .endTime(appointment.getEndTime())
+                        .status(appointment.getStatus().name())
+                        .description(appointment.getDescription())
+                        .appointmentType(appointment.getAppointmentType().getName())
+                        .createdAt(appointment.getCreatedAt())
+                        .transactionId(transaction != null ? transaction.getId() : null)
+                        .amountTotal(transaction != null ? transaction.getAmountTotal() : null)
+                        .amountSubtotal(transaction != null ? transaction.getAmountSubtotal() : null)
+                        .currency(transaction != null ? transaction.getCurrency() : null)
+                        .paymentStatus(transaction != null ? transaction.getPaymentStatus() : null)
+                        .paymentTransactionId(transaction != null ? transaction.getPaymentTransactionId() : null)
+                        .paymentMethod(transaction != null ? transaction.getPaymentMethodType() : null)
+                        .liveMode(transaction != null && transaction.isLivemode())
+                        .stripeMode(transaction != null ? transaction.getStripeStatus() : null)
+                        .transactionCreatedAt(transaction != null ? transaction.getCreatedAt() : null)
+                        .customerDetails(transaction != null ? String.valueOf(transaction.getCustomerDetails()) : null)
+                        .build();
+            }).toList();
+        } else {
+            log.info("Fetching the appointment(s) details for ADMIN");
+            List<Appointment> appointments = appointmentRepository.findAll();
+            return appointments.stream().map(appointment -> {
+                log.info("Fetching the transactions based on appointment Id {}", appointment.getId());
+                Transaction transaction = transactionRepository.findByAppointmentId(appointment.getId())
+                        .orElse(null);
+                return AppointmentWithTransactionDTO.builder()
+                        .appointmentId(appointment.getId())
+                        .customerId(appointment.getCustomerId())
+                        .lawyerId(appointment.getLawyerId())
+                        .appointmentDate(appointment.getAppointmentDate())
+                        .startTime(appointment.getStartTime())
+                        .endTime(appointment.getEndTime())
+                        .status(appointment.getStatus().name())
+                        .description(appointment.getDescription())
+                        .appointmentType(appointment.getAppointmentType().getName())
+                        .createdAt(appointment.getCreatedAt())
+                        .transactionId(transaction != null ? transaction.getId() : null)
+                        .amountTotal(transaction != null ? transaction.getAmountTotal() : null)
+                        .amountSubtotal(transaction != null ? transaction.getAmountSubtotal() : null)
+                        .currency(transaction != null ? transaction.getCurrency() : null)
+                        .paymentStatus(transaction != null ? transaction.getPaymentStatus() : null)
+                        .paymentTransactionId(transaction != null ? transaction.getPaymentTransactionId() : null)
+                        .paymentMethod(transaction != null ? transaction.getPaymentMethodType() : null)
+                        .liveMode(transaction != null && transaction.isLivemode())
+                        .stripeMode(transaction != null ? transaction.getStripeStatus() : null)
+                        .transactionCreatedAt(transaction != null ? transaction.getCreatedAt() : null)
+                        .customerDetails(transaction != null ? String.valueOf(transaction.getCustomerDetails()) : null)
+                        .build();
+            }).toList();
+        }
+    }
+
 //    public List<Appointment> getByLawyer(UUID lawyerId) {
 //        return appointmentRepository.findByLawyerId(lawyerId);
 //    }

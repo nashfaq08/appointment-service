@@ -161,6 +161,40 @@ public class ProfileServiceClient {
         }
     }
 
+    public UUID fetchLawyerId(UUID lawyerAuthUserId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Internal-Secret", internalServiceSecret);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        String url = profileServiceUrl + "/internal/lawyer/" + lawyerAuthUserId + "/uuid";
+
+        log.info("Calling the profile service to fetch the lawyer id: {}", url);
+
+        try {
+            UUID response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    requestEntity,
+                    UUID.class
+            ).getBody();
+
+            log.info("Received response from profile service: {}", response);
+
+            return response;
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            log.error("Error while calling profile service (Status: {}): {}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw e;
+        } catch (ResourceAccessException e) {
+            log.error("Profile service unreachable: {}", e.getMessage(), e);
+            throw new ApiException("Profile service unreachable", "PROFILE_SERVICE_DOWN", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (Exception e) {
+            log.error("Unexpected error while fetching lawyer services: {}", e.getMessage(), e);
+            throw new ApiException("Unexpected error", "UNEXPECTED_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     public boolean isLawyerValid(UUID authUserId) {
 
         HttpHeaders headers = new HttpHeaders();
