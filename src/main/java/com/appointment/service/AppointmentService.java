@@ -27,6 +27,7 @@ import java.util.UUID;
 public class AppointmentService {
 
     private final NotificationService notificationService;
+    private final EmailService emailService;
     private final AppointmentRepository appointmentRepository;
     private final AppointmentTypeRepository appointmentTypeRepository;
     private final TransactionRepository transactionRepository;
@@ -72,7 +73,7 @@ public class AppointmentService {
         // Step 4: Prepare and save
         UUID custId = UUID.fromString(customerId);
 
-        AppointmentType appointmentType = appointmentTypeRepository.findByName(appointmentDTO.getAppointmentType())
+        AppointmentType appointmentType = appointmentTypeRepository.findByNameIgnoreCase(appointmentDTO.getAppointmentType())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type"));
 
         Appointment appointment = Appointment.builder()
@@ -155,8 +156,40 @@ public class AppointmentService {
 
         log.info("Fetching the appointment type based on the given type name {}", stripeDTO.getAppointmentTypeId());
 
-        AppointmentType appointmentType = appointmentTypeRepository.findByName(stripeDTO.getAppointmentTypeId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type"));
+        String appointmentType = stripeDTO.getAppointmentTypeId();
+        LawyerDetailsDTO lawyerDetailsDTO = profileServiceClient.fetchLawyerServices(stripeDTO.getLawyerId());
+
+        log.info("Checking if the lawyer service {} exists", appointmentType);
+
+        boolean exists = lawyerDetailsDTO.getServices().stream()
+                .anyMatch(group ->
+                        group.getServices() != null &&
+                                group.getServices().contains(appointmentType)
+                );
+
+        if (!exists) {
+            log.error("Appointment type '{}' is not applicable for lawyer {}",
+                    appointmentType, stripeDTO.getLawyerId());
+
+            throw new ApiException(
+                    "The selected appointment type is not applicable for this lawyer.",
+                    "APPOINTMENT_TYPE_NOT_ALLOWED",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        log.info("Precheck for the Appointment Type existence");
+
+        AppointmentType appointmentTypeRec = appointmentTypeRepository
+                .findByNameIgnoreCase(appointmentType)
+                .orElseGet(() -> {
+                    AppointmentType newType = AppointmentType.builder()
+                            .name(appointmentType)
+                            .build();
+
+                    log.info("Storing the Appointment Type received from lawyer profile record {}", newType);
+                    return appointmentTypeRepository.save(newType);
+                });
 
         log.info("Storing the apppointment record in the database for lawyer {}",  stripeDTO.getLawyerId());
 
@@ -168,7 +201,9 @@ public class AppointmentService {
                 .endTime(LocalTime.parse(stripeDTO.getStartTime()).plusMinutes(30))
                 .description(stripeDTO.getDescription())
                 .status(AppointmentStatus.PENDING)
-                .appointmentType(appointmentType)
+                .appointmentType(appointmentTypeRec)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
         appointmentRepository.save(savedAppointment);
 
@@ -187,7 +222,17 @@ public class AppointmentService {
 
         transactionRepository.save(savedTransaction);
 
-        log.info("Appointment booked and transaction recorded for user {}", stripeDTO.getCustomer_details().getEmail());
+        log.info("Transaction recorded successfully for user {}", stripeDTO.getCustomer_details().getEmail());
+
+        savedAppointment.setStatus(AppointmentStatus.BOOKED);
+        appointmentRepository.save(savedAppointment);
+
+        log.info("Appointment {} status updated to BOOKED", savedAppointment.getId());
+
+//        log.info("Sending email notification to lawyer {}", lawyerDetailsDTO.getLawyerEmail());
+//        emailService.sendAppointmentBookingEmail(lawyerDetailsDTO.getLawyerEmail(),
+//                stripeDTO.getCustomer_details().getName(),
+//                appointmentType, stripeDTO.getAppointmentDate(), stripeDTO.getStartTime());
 
         return savedAppointment;
     }
@@ -291,7 +336,7 @@ public class AppointmentService {
         // Select the first available lawyer (you can improve this logic later)
         UUID selectedLawyerId = UUID.fromString(String.valueOf(availableLawyers.get(0)));
 
-        AppointmentType type = appointmentTypeRepository.findByName(appointmentOpenRequestDTO.getAppointmentType())
+        AppointmentType type = appointmentTypeRepository.findByNameIgnoreCase(appointmentOpenRequestDTO.getAppointmentType())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type"));
 
         // Step 5: Save the appointment
@@ -361,17 +406,55 @@ public class AppointmentService {
     }
 
     public List<Appointment> getByCustomer(String customerAuthUserId) {
-        if (!profileServiceClient.isCustomerExist(UUID.fromString(customerAuthUserId))) {
-            throw new ApiException("Customer not authorized to list the appointments.", "CUSTOMER_NOT_AUTHORIZED", HttpStatus.UNAUTHORIZED);
+
+        log.info("Fetching appointments for customer auth id: {}", customerAuthUserId);
+
+        UUID customerAuthId;
+        try {
+            customerAuthId = UUID.fromString(customerAuthUserId);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid customer auth user ID format: {}", customerAuthUserId, e);
+            throw new ApiException(
+                    "Invalid customer authentication ID format.",
+                    "INVALID_CUSTOMER_ID",
+                    HttpStatus.BAD_REQUEST
+            );
         }
-        return appointmentRepository.findAllByCustomerId(UUID.fromString(customerAuthUserId));
+
+        // Fetch customer profile or handle if missing
+        CustomerDTO customer;
+        try {
+            customer = profileServiceClient.fetchCustomerIfExists(customerAuthId);
+            if (customer == null) {
+                log.warn("Customer with auth user ID {} does not exist", customerAuthId);
+                throw new ApiException(
+                        "Customer not authorized to list the appointments.",
+                        "CUSTOMER_NOT_AUTHORIZED",
+                        HttpStatus.UNAUTHORIZED
+                );
+            }
+        } catch (Exception e) {
+            log.error("Error while verifying customer existence for ID {}: {}", customerAuthId, e.getMessage(), e);
+            throw new ApiException(
+                    "Failed to validate customer. Please try again later.",
+                    "CUSTOMER_LOOKUP_FAILED",
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+
+        log.info("Customer {} exists. Fetching appointments...", customerAuthId);
+
+        return appointmentRepository.findAllByCustomerId(customerAuthId);
     }
 
     public List<Appointment> getByLawyer(String lawyerAuthUserId) {
+
+        LawyerDetailsDTO lawyerDetailsDTO = profileServiceClient.fetchLawyerServices(UUID.fromString(lawyerAuthUserId));
+
         if (!profileServiceClient.isLawyerValid(UUID.fromString(lawyerAuthUserId))) {
             throw new ApiException("lawyer not authorized to list the appointments.", "LAWYER_NOT_AUTHORIZED", HttpStatus.UNAUTHORIZED);
         }
-        return appointmentRepository.findAllByLawyerId(UUID.fromString(lawyerAuthUserId));
+        return appointmentRepository.findAllByLawyerId(lawyerDetailsDTO.getId());
     }
 
     public List<Appointment> getAppointmentsByLawyerId(UUID lawyerId) {

@@ -1,8 +1,7 @@
 package com.appointment.client;
 
-import com.appointment.dto.AvailabilityCheckRequestDTO;
-import com.appointment.dto.CustomerDTO;
-import com.appointment.dto.OpenAppointmentSearchDTO;
+import com.appointment.dto.*;
+import com.appointment.exception.ApiException;
 import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,8 +9,10 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -123,6 +124,40 @@ public class ProfileServiceClient {
             return response.getBody();
         } catch (HttpClientErrorException.NotFound e) {
             return null;
+        }
+    }
+
+    public LawyerDetailsDTO fetchLawyerServices(UUID lawyerId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Internal-Secret", internalServiceSecret);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        String url = profileServiceUrl + "/internal/lawyer/" + lawyerId;
+
+        log.info("Calling the profile service to fetch the lawyer services: {}", url);
+
+        try {
+            LawyerDetailsDTO response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    requestEntity,
+                    LawyerDetailsDTO.class
+            ).getBody();
+
+            log.info("Received response from profile service: {}", response);
+
+            return response;
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            log.error("Error while calling profile service (Status: {}): {}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw e;
+        } catch (ResourceAccessException e) {
+            log.error("Profile service unreachable: {}", e.getMessage(), e);
+            throw new ApiException("Profile service unreachable", "PROFILE_SERVICE_DOWN", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (Exception e) {
+            log.error("Unexpected error while fetching lawyer services: {}", e.getMessage(), e);
+            throw new ApiException("Unexpected error", "UNEXPECTED_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

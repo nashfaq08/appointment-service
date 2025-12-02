@@ -43,6 +43,57 @@ jwt:
   secret: thisIsMysecregtfrdesww233eggtffeeddgkjjhhtdhttebd54ndhdhfhhhshs8877465sbbdd
   expiration: 3600000
 
+# Email Configuration
+email:
+  smtp:
+    host: smtp.hostinger.com
+    port: 587
+    protocols: TLSv1.3
+    auth: true
+    starttls: true
+    trust: smtp.hostinger.com
+    protocol: smtp
+  from:
+    address: noreply@batech.info
+    password: Admin@4209211
+    name: OTP Lawyer Service
+  to: usasid@gmail.com
+  subject: Appointment Booking Notification
+  body: >
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="UTF-8">
+    </head>
+    <body>
+    <p>Dear Lawyer,</p>
+    <p>A customer has booked an <strong>appointment</strong> with you.</p>
+    <p>
+        <strong>Appointment Details:</strong><br>
+        Customer Name: <strong>%{appointment.customerName}</strong><br>
+        Date: <strong>%{appointment.date}</strong><br>
+        Time: <strong>%{appointment.time}</strong><br>
+        Appointment Type: <strong>%{appointment.type}</strong>
+    </p>
+    <p>
+        Please review the booking request and choose one of the following actions:
+    </p>
+    <ul>
+        <li><strong>Accept</strong> the appointment</li>
+        <li><strong>Reject</strong> the appointment</li>
+    </ul>
+    <p>
+    You can manage this appointment directly from your <strong>dashboard</strong> in the application.
+    </p>
+    <p>
+    If you believe this request was made in error or have any concerns, please contact our Support Team immediately.
+    </p>
+    <br>
+    <p>Regards,<br>
+    </body>
+    </html>
+
+
 service:
   auth-url: "http://localhost:8080"
   profile-url: "http://localhost:8081"
