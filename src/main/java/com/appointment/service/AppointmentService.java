@@ -61,7 +61,7 @@ public class AppointmentService {
         DayOfWeek requestedDayOfWeek = appointmentDTO.getAppointmentDate().getDayOfWeek();
 
         List<Appointment> existingAppointments = appointmentRepository
-                .findByLawyerIdAndDayOfWeek(appointmentDTO.getLawyerId(), requestedDayOfWeek.getValue());
+                .findByLawyerIdAndAppointmentDate(appointmentDTO.getLawyerId(), appointmentDTO.getAppointmentDate());
 
         checkAppointmentOverlap(appointmentDTO, existingAppointments);
 
