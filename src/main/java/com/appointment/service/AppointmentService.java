@@ -85,9 +85,9 @@ public class AppointmentService {
     }
 
     @Transactional
-    public void checkAppointmentOverlap(AppointmentDTO appointmentDTO, List<Appointment> existingAppointments) {
+    public void checkAppointmentOverlap(LocalTime startTime, List<Appointment> existingAppointments) {
 
-        LocalTime newStart = appointmentDTO.getStartTime();
+        LocalTime newStart = startTime;
         LocalTime newEnd = newStart.plusMinutes(30);  // 30-minute slot
 
         for (Appointment existing : existingAppointments) {
@@ -154,15 +154,19 @@ public class AppointmentService {
 
         log.info("Checking if the selected lawyer has any existing appointments for lawyer {} on day {}", stripeDTO.getLawyerId(), requestedDayOfWeek.getValue());
 
+//        List<Appointment> existingAppointments = appointmentRepository
+//                .findByLawyerIdAndDayOfWeek(stripeDTO.getLawyerId(), requestedDayOfWeek.getValue());
+
         List<Appointment> existingAppointments = appointmentRepository
-                .findByLawyerIdAndDayOfWeek(stripeDTO.getLawyerId(), requestedDayOfWeek.getValue());
+                .findByLawyerIdAndAppointmentDate(stripeDTO.getLawyerId(), LocalDate.parse(stripeDTO.getAppointmentDate()));
+
+        checkAppointmentOverlap(LocalTime.parse(stripeDTO.getStartTime()), existingAppointments);
 
         if (existingAppointments.isEmpty()) {
             log.info("No existing appointment for lawyer {} in the given timeslot", stripeDTO.getLawyerId());
         }
 
         for (Appointment existing : existingAppointments) {
-
             // First check if they are on the same date
             if (existing.getAppointmentDate().toString().equals(stripeDTO.getAppointmentDate())) {
 
