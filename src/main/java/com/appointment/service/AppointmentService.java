@@ -63,13 +63,7 @@ public class AppointmentService {
         List<Appointment> existingAppointments = appointmentRepository
                 .findByLawyerIdAndDayOfWeek(appointmentDTO.getLawyerId(), requestedDayOfWeek.getValue());
 
-        for (Appointment existing : existingAppointments) {
-            boolean overlaps = !(appointmentDTO.getStartTime().plusMinutes(30).isBefore(existing.getStartTime())
-                    || appointmentDTO.getStartTime().isAfter(existing.getEndTime()));
-            if (overlaps) {
-                throw new ApiException("An appointment already exists for the specified time slot.", "APPOINTMENT_ALREADY_EXISTS", HttpStatus.BAD_REQUEST);
-            }
-        }
+        checkAppointmentOverlap(appointmentDTO, existingAppointments);
 
         // Step 4: Prepare and save
         UUID custId = UUID.fromString(customerId);
@@ -88,6 +82,29 @@ public class AppointmentService {
                 .appointmentType(appointmentType)
                 .build();
         return appointmentRepository.save(appointment);
+    }
+
+    @Transactional
+    public void checkAppointmentOverlap(AppointmentDTO appointmentDTO, List<Appointment> existingAppointments) {
+
+        LocalTime newStart = appointmentDTO.getStartTime();
+        LocalTime newEnd = newStart.plusMinutes(30);  // 30-minute slot
+
+        for (Appointment existing : existingAppointments) {
+
+            LocalTime existingStart = existing.getStartTime();
+            LocalTime existingEnd = existingStart.plusMinutes(30); // fixed 30-minute slot
+
+            boolean overlaps = newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart);
+
+            if (overlaps) {
+                throw new ApiException(
+                        "An appointment already exists for the specified time slot.",
+                        "APPOINTMENT_ALREADY_EXISTS",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+        }
     }
 
     @Transactional
