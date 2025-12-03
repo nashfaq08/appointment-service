@@ -11,6 +11,7 @@ import com.appointment.exception.ApiException;
 import com.appointment.repositories.AppointmentRepository;
 import com.appointment.repositories.AppointmentTypeRepository;
 import com.appointment.repositories.TransactionRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -90,9 +91,9 @@ public class AppointmentService {
     }
 
     @Transactional
-    public Appointment bookAppointment(String customerAuthId, StripeDTO stripeDTO) {
+    public Appointment bookAppointment(String customerAuthId, StripeDTO stripeDTO) throws JsonProcessingException {
 
-        log.info("Starting to book the appointment after payment has been successfully charged");
+        log.info("Starting to book the appointment after payment has been successfully charged {}", new ObjectMapper().writeValueAsString(stripeDTO));
 
         // Step 1: Customer existence check
         if (!profileServiceClient.isCustomerExist(UUID.fromString(customerAuthId))) {
@@ -144,10 +145,23 @@ public class AppointmentService {
         }
 
         for (Appointment existing : existingAppointments) {
-            boolean overlaps = !(LocalTime.parse(stripeDTO.getStartTime()).plusMinutes(30).isBefore(existing.getStartTime())
-                    || LocalTime.parse(stripeDTO.getStartTime()).isAfter(existing.getEndTime()));
-            if (overlaps) {
-                throw new ApiException("An appointment already exists for the specified time slot.", "APPOINTMENT_ALREADY_EXISTS", HttpStatus.BAD_REQUEST);
+
+            // First check if they are on the same date
+            if (existing.getAppointmentDate().toString().equals(stripeDTO.getAppointmentDate())) {
+
+                LocalTime newStart = LocalTime.parse(stripeDTO.getStartTime());
+                LocalTime newEnd = newStart.plusMinutes(30);
+
+                boolean overlaps = !(newEnd.isBefore(existing.getStartTime())
+                        || newStart.isAfter(existing.getEndTime()));
+
+                if (overlaps) {
+                    throw new ApiException(
+                            "An appointment already exists for the specified time slot.",
+                            "APPOINTMENT_ALREADY_EXISTS",
+                            HttpStatus.BAD_REQUEST
+                    );
+                }
             }
         }
 

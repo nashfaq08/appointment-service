@@ -7,6 +7,7 @@ import com.appointment.dto.StripeDTO;
 import com.appointment.dto.response.ApiResponse;
 import com.appointment.entities.Appointment;
 import com.appointment.service.AppointmentService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,7 +38,7 @@ public class AppointmentController {
     public ResponseEntity<Appointment> bookAppointment(
             @RequestBody StripeDTO stripeDTO,
             Authentication authentication
-    ) {
+    ) throws JsonProcessingException {
         String customerAuthId = authentication.getName();
         return ResponseEntity.ok(appointmentService.bookAppointment(customerAuthId, stripeDTO));
     }

@@ -35,8 +35,12 @@ spring:
     enabled: true
 
 logging:
+  file:
+    name: /var/log/appointment_service/appointment_service.log
   level:
     root: INFO
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 
 # JWT Configuration
 jwt:
