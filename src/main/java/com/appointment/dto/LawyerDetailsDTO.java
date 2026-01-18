@@ -9,4 +9,5 @@ import java.util.UUID;
 public class LawyerDetailsDTO {
     private List<ServiceGroupDTO> services;
     private UUID id;
+    private UUID authUserId;
 }

@@ -121,18 +121,6 @@ public class AppointmentService {
 
         CustomerDTO customerDTO = profileServiceClient.fetchCustomerIfExists(UUID.fromString(customerAuthId));
 
-        log.info("Fetching the device token based on customer auth Id");
-
-        String deviceToken = authServiceClient.getDeviceToken(UUID.fromString(customerAuthId));
-
-        log.info("Sending the notification to the user device");
-
-        try {
-            notificationService.sendNotificationToDevice(deviceToken, "Appointment Booking", "A customer wants to book an appointment with you.");
-        } catch (Exception ex) {
-            log.error("Failed to send notification to device: {}", ex.getMessage());
-        }
-
         log.info("Checking the appointment availablity according to the selected lawyer schedule");
 
         // Step 2: Check availability via Profile service
@@ -226,7 +214,19 @@ public class AppointmentService {
                     return appointmentTypeRepository.save(newType);
                 });
 
-        log.info("Storing the apppointment record in the database for lawyer {}",  stripeDTO.getLawyerId());
+        log.info("Storing the appointment record in the database for lawyer {}",  stripeDTO.getLawyerId());
+
+        log.info("Fetching the device token based on selected lawyer with auth Id {}", lawyerDetailsDTO.getAuthUserId());
+
+        String deviceToken = authServiceClient.getDeviceToken(lawyerDetailsDTO.getAuthUserId());
+
+        log.info("Sending the notification to the user device");
+
+        try {
+            notificationService.sendNotificationToDevice(deviceToken, "Appointment Booking", "A customer wants to book an appointment with you.");
+        } catch (Exception ex) {
+            log.error("Failed to send notification to device: {}", ex.getMessage());
+        }
 
         Appointment savedAppointment = Appointment.builder()
                 .customerId(customerDTO.getId())
