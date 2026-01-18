@@ -63,7 +63,7 @@ public class AppointmentService {
         List<Appointment> existingAppointments = appointmentRepository
                 .findByLawyerIdAndAppointmentDate(appointmentDTO.getLawyerId(), appointmentDTO.getAppointmentDate());
 
-        checkAppointmentOverlap(appointmentDTO, existingAppointments);
+        checkAppointmentOverlap(appointmentDTO.getStartTime(), existingAppointments);
 
         // Step 4: Prepare and save
         UUID custId = UUID.fromString(customerId);
@@ -94,6 +94,8 @@ public class AppointmentService {
 
             LocalTime existingStart = existing.getStartTime();
             LocalTime existingEnd = existingStart.plusMinutes(30); // fixed 30-minute slot
+
+            log.info("Checking appointment overlap for {} and {} with new {} and {}", existingStart, existingEnd, newStart, newEnd);
 
             boolean overlaps = newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart);
 
@@ -145,37 +147,18 @@ public class AppointmentService {
 //        List<Appointment> existingAppointments = appointmentRepository
 //                .findByLawyerIdAndDayOfWeek(stripeDTO.getLawyerId(), requestedDayOfWeek.getValue());
 
+        log.info("Parsed date for newly requested appointment {} ", LocalDate.parse(stripeDTO.getAppointmentDate()));
+
         List<Appointment> existingAppointments = appointmentRepository
                 .findByLawyerIdAndAppointmentDate(stripeDTO.getLawyerId(), LocalDate.parse(stripeDTO.getAppointmentDate()));
+
+        log.info("Found {} existing appointments for lawyer {}", existingAppointments.size(), stripeDTO.getLawyerId());
 
         checkAppointmentOverlap(LocalTime.parse(stripeDTO.getStartTime()), existingAppointments);
 
         if (existingAppointments.isEmpty()) {
             log.info("No existing appointment for lawyer {} in the given timeslot", stripeDTO.getLawyerId());
         }
-
-        for (Appointment existing : existingAppointments) {
-            // First check if they are on the same date
-            if (existing.getAppointmentDate().toString().equals(stripeDTO.getAppointmentDate())) {
-
-                LocalTime newStart = LocalTime.parse(stripeDTO.getStartTime());
-                LocalTime newEnd = newStart.plusMinutes(30);
-
-                boolean overlaps = !(newEnd.isBefore(existing.getStartTime())
-                        || newStart.isAfter(existing.getEndTime()));
-
-                if (overlaps) {
-                    throw new ApiException(
-                            "An appointment already exists for the specified time slot.",
-                            "APPOINTMENT_ALREADY_EXISTS",
-                            HttpStatus.BAD_REQUEST
-                    );
-                }
-            }
-        }
-
-        // Step 4: Prepare and save
-//        UUID custId = UUID.fromString(stripeDTO.getCustomer_details().getId());
 
         log.info("Fetching the appointment type based on the given type name {}", stripeDTO.getAppointmentTypeId());
 
@@ -515,7 +498,9 @@ public class AppointmentService {
                 return AppointmentWithTransactionDTO.builder()
                         .appointmentId(appointment.getId())
                         .customerId(appointment.getCustomerId())
+                        .customerName(customer.getName())
                         .lawyerId(appointment.getLawyerId())
+                        .lawyerName("")
                         .appointmentDate(appointment.getAppointmentDate())
                         .startTime(appointment.getStartTime())
                         .endTime(appointment.getEndTime())

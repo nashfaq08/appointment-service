@@ -14,7 +14,9 @@ import java.util.UUID;
 public class AppointmentWithTransactionDTO {
     private UUID appointmentId;
     private UUID customerId;
+    private String customerName;
     private UUID lawyerId;
+    private String lawyerName;
     private LocalDate appointmentDate;
     private LocalTime startTime;
     private LocalTime endTime;
