@@ -63,7 +63,7 @@ public class AppointmentService {
         List<Appointment> existingAppointments = appointmentRepository
                 .findByLawyerIdAndAppointmentDate(appointmentDTO.getLawyerId(), appointmentDTO.getAppointmentDate());
 
-        checkAppointmentOverlap(appointmentDTO, existingAppointments);
+        checkAppointmentOverlap(appointmentDTO.getStartTime(), existingAppointments);
 
         // Step 4: Prepare and save
         UUID custId = UUID.fromString(customerId);
