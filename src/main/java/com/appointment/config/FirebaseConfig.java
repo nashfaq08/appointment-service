@@ -44,8 +44,7 @@ public class FirebaseConfig {
     @PostConstruct
     public void initialize() {
         try {
-            // Provide the absolute or relative path to your JSON file
-            String jsonPath = "./lawyers-appointment-firebase.json"; // if in same dir as JAR
+            String jsonPath = "/home/apps/deployments/lawyers-appointment-firebase.json";
             FileInputStream serviceAccount = new FileInputStream(jsonPath);
 
             GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
@@ -66,5 +65,4 @@ public class FirebaseConfig {
             throw new RuntimeException("Failed to initialize Firebase", e);
         }
     }
-
 }
