@@ -44,18 +44,11 @@ public class FirebaseConfig {
     @PostConstruct
     public void initialize() {
         try {
-            InputStream serviceAccount =
-                    Thread.currentThread()
-                            .getContextClassLoader()
-                            .getResourceAsStream("lawyers-appointment-firebase.json");
+            // Provide the absolute or relative path to your JSON file
+            String jsonPath = "./lawyers-appointment-firebase.json"; // if in same dir as JAR
+            FileInputStream serviceAccount = new FileInputStream(jsonPath);
 
-            if (serviceAccount == null) {
-                throw new IllegalStateException(
-                        "lawyers-appointment-firebase.json.json not found in classpath");
-            }
-
-            GoogleCredentials credentials =
-                    GoogleCredentials.fromStream(serviceAccount);
+            GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
 
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(credentials)
@@ -65,9 +58,7 @@ public class FirebaseConfig {
                 FirebaseApp.initializeApp(options);
             }
 
-            ServiceAccountCredentials sac =
-                    (ServiceAccountCredentials) credentials;
-
+            ServiceAccountCredentials sac = (ServiceAccountCredentials) credentials;
             log.info("Firebase SA email = {}", sac.getClientEmail());
             log.info("Firebase key id = {}", sac.getPrivateKeyId());
 
