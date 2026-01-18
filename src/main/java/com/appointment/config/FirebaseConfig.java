@@ -1,14 +1,17 @@
 package com.appointment.config;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.InputStream;
 
 @Configuration
+@Slf4j
 public class FirebaseConfig {
 
     @PostConstruct
@@ -25,6 +28,12 @@ public class FirebaseConfig {
             if (FirebaseApp.getApps().isEmpty()) {
                 FirebaseApp.initializeApp(options);
             }
+
+            ServiceAccountCredentials sac =
+                    (ServiceAccountCredentials) credentials;
+
+            log.info("Firebase SA email = {}", sac.getClientEmail());
+            log.info("Firebase key id = {}", sac.getPrivateKeyId());
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize Firebase", e);
