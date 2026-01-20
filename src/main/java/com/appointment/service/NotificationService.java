@@ -2,6 +2,7 @@ package com.appointment.service;
 
 import com.google.firebase.messaging.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -30,6 +31,7 @@ public class NotificationService {
         }
     }
 
+    @Async
     public void sendToMultipleDevices(List<String> tokens, String title, String body) {
         log.info("Sending notification to multiple devices");
         MulticastMessage message = MulticastMessage.builder()
