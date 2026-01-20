@@ -3,12 +3,14 @@ package com.appointment.client;
 import com.appointment.exception.NoDeviceTokenFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -85,5 +87,54 @@ public class AuthServiceClient {
             return null;
         }
     }
+
+    public List<String> getMultipleDevicesToken(List<UUID> userAuthIds) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-Internal-Secret", internalServiceSecret);
+
+            HttpEntity<List<UUID>> entity = new HttpEntity<>(userAuthIds, headers);
+
+            String url = authServiceUrl + "/internal/auth/deviceTokens";
+
+            log.info("Calling auth service to fetch device tokens for userAuthIds: {}", userAuthIds);
+
+            ResponseEntity<List<String>> response =
+                    restTemplate.exchange(
+                            url,
+                            HttpMethod.POST,
+                            entity,
+                            new ParameterizedTypeReference<>() {}
+                    );
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                List<String> tokens = response.getBody();
+                log.info("Received {} device tokens from auth service",
+                        tokens != null ? tokens.size() : 0);
+                return tokens != null ? tokens : List.of();
+            }
+
+            throw new IllegalStateException(
+                    "Auth service returned unexpected status: " + response.getStatusCode()
+            );
+
+        } catch (HttpStatusCodeException e) {
+            log.error(
+                    "Auth service error ({}): {}",
+                    e.getStatusCode(),
+                    e.getResponseBodyAsString()
+            );
+            throw e;
+
+        } catch (Exception e) {
+            log.error(
+                    "Exception while calling auth service for device tokens",
+                    e
+            );
+            throw new IllegalStateException("Auth service call failed", e);
+        }
+    }
+
 }
 

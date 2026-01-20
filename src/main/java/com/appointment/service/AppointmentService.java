@@ -4,6 +4,7 @@ import com.appointment.client.AuthServiceClient;
 import com.appointment.client.ProfileServiceClient;
 import com.appointment.constants.AppointmentStatus;
 import com.appointment.dto.*;
+import com.appointment.dto.response.AvailableLawyersResponse;
 import com.appointment.entities.Appointment;
 import com.appointment.entities.AppointmentType;
 import com.appointment.entities.Transaction;
@@ -20,7 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.*;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -344,55 +348,158 @@ public class AppointmentService {
 //        return savedAppointment;
 //    }
 
-    @Transactional
-    public Appointment createOpenAppointment(String customerId, AppointmentOpenRequestDTO appointmentOpenRequestDTO) {
+//    @Transactional
+//    public Appointment createOpenAppointment(String customerId, AppointmentOpenRequestDTO appointmentOpenRequestDTO) {
+//
+//        // Step 1: Customer existence check
+//        if (!profileServiceClient.isCustomerExist(UUID.fromString(customerId))) {
+//            throw new ApiException("Invalid or unapproved customer.", "INVALID_CUSTOMER_ID", HttpStatus.BAD_REQUEST);
+//        }
+//
+//        // Step 2: Prepare request for profile service
+//        OpenAppointmentSearchDTO openAppointmentSearchDTO = OpenAppointmentSearchDTO.builder()
+//                        .appointmentType(appointmentOpenRequestDTO.getAppointmentType())
+//                        .appointmentDate(appointmentOpenRequestDTO.getAppointmentDate())
+//                        .startTime(appointmentOpenRequestDTO.getStartTime())
+//                        .endTime(appointmentOpenRequestDTO.getEndTime())
+//                        .build();
+//
+//        // Step 3: Call profile service to get available lawyers
+//        List<AvailableLawyersResponse> availableLawyers = profileServiceClient.getAvailableLawyers(openAppointmentSearchDTO);
+//        log.info("Available lawyer details: {}", availableLawyers);
+//
+//        if (availableLawyers == null || availableLawyers.isEmpty()) {
+//            throw new ApiException("No available lawyers found for the requested time slot and apppointment type.", "NO_LAWYERS_FOUND",  HttpStatus.NOT_FOUND);
+//        }
+//
+//        List<UUID> authUserIds = Optional.of(availableLawyers)
+//                .orElse(List.of())
+//                .stream()
+//                .map(AvailableLawyersResponse::getAuthUserId)
+//                .filter(Objects::nonNull)
+//                .distinct()
+//                .toList();
+//
+//        // save appointment and send the appointment id and details
+//
+//        // Step 4: Have a list of available lawyers and will need to send the notification to them and based on that the logic will handle the acceptance of the lawyer who selected the appointment
+//        // Select the first available lawyer (you can improve this logic later)
+////        UUID selectedLawyerId = UUID.fromString(String.valueOf(availableLawyers.get(0)));
+//
+//        AppointmentType type = appointmentTypeRepository.findByNameIgnoreCase(appointmentOpenRequestDTO.getAppointmentType())
+//                .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type"));
+//
+//        // Step 5: Save the appointment without lawyer at the start
+//        Appointment appointment = Appointment.builder()
+//                .customerId(UUID.fromString(customerId))
+////                .lawyerId(selectedLawyerId)
+//                .appointmentType(type)
+//                .appointmentDate(appointmentOpenRequestDTO.getAppointmentDate())
+//                .startTime(appointmentOpenRequestDTO.getStartTime())
+//                .endTime(appointmentOpenRequestDTO.getEndTime())
+//                .description(appointmentOpenRequestDTO.getDescription())
+//                .status(AppointmentStatus.PENDING)
+//                .createdAt(LocalDateTime.now())
+//                .updatedAt(LocalDateTime.now())
+//                .build();
+//
+//        // Get Tokens for all the filtered lawyers
+//        List<String> deviceTokens = authServiceClient.getMultipleDevicesToken(authUserIds);
+//        log.info("Retrieved Device Tokens: {}", deviceTokens);
+//
+//        // Send notification
+//        notificationService.sendToMultipleDevices(deviceTokens, "Appointment Booking", "A customer wants to book an appointment with you.");
+//
+//        return appointmentRepository.save(appointment);
+//    }
 
-        // Step 1: Customer existence check
-        if (!profileServiceClient.isCustomerExist(UUID.fromString(customerId))) {
-            throw new ApiException("Invalid or unapproved customer.", "INVALID_CUSTOMER_ID", HttpStatus.BAD_REQUEST);
+    @Transactional
+    public Appointment createOpenAppointment(
+            String customerId,
+            AppointmentOpenRequestDTO appointmentOpenRequestDTO) {
+
+        // Step 1: Validate customer
+        UUID customerUUID = UUID.fromString(customerId);
+        if (!profileServiceClient.isCustomerExist(customerUUID)) {
+            throw new ApiException(
+                    "Invalid or unapproved customer.",
+                    "INVALID_CUSTOMER_ID",
+                    HttpStatus.BAD_REQUEST
+            );
         }
 
-        // Step 2: Prepare request for profile service
-        OpenAppointmentSearchDTO openAppointmentSearchDTO = OpenAppointmentSearchDTO.builder()
+        // Step 2: Build search DTO
+        OpenAppointmentSearchDTO openAppointmentSearchDTO =
+                OpenAppointmentSearchDTO.builder()
                         .appointmentType(appointmentOpenRequestDTO.getAppointmentType())
                         .appointmentDate(appointmentOpenRequestDTO.getAppointmentDate())
                         .startTime(appointmentOpenRequestDTO.getStartTime())
                         .endTime(appointmentOpenRequestDTO.getEndTime())
                         .build();
 
-        // Step 3: Call profile service to get available lawyers
-        List<String> availableLawyers = profileServiceClient.getAvailableLawyers(openAppointmentSearchDTO);
+        // Step 3: Fetch available lawyers
+        List<AvailableLawyersResponse> availableLawyers =
+                profileServiceClient.getAvailableLawyers(openAppointmentSearchDTO);
 
         if (availableLawyers == null || availableLawyers.isEmpty()) {
-            throw new ApiException("No available lawyers found for the requested time slot and apppointment type.", "NO_LAWYERS_FOUND",  HttpStatus.NOT_FOUND);
+            throw new ApiException(
+                    "No available lawyers found for the requested time slot and appointment type.",
+                    "NO_LAWYERS_FOUND",
+                    HttpStatus.NOT_FOUND
+            );
         }
 
-        // Step 4: Have a list of available lawyers and will need to send the notification to them and based on that the logic will handle the acceptance of the lawyer who selected the appointment
-        // Select the first available lawyer (you can improve this logic later)
-        UUID selectedLawyerId = UUID.fromString(String.valueOf(availableLawyers.get(0)));
+        List<UUID> authUserIds = availableLawyers.stream()
+                .map(AvailableLawyersResponse::getAuthUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
 
-        AppointmentType type = appointmentTypeRepository.findByNameIgnoreCase(appointmentOpenRequestDTO.getAppointmentType())
+        AppointmentType type = appointmentTypeRepository
+                .findByNameIgnoreCase(appointmentOpenRequestDTO.getAppointmentType())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type"));
 
-        // Step 5: Save the appointment
-        Appointment appointment = Appointment.builder()
-                .customerId(UUID.fromString(customerId))
-                .lawyerId(selectedLawyerId)
-                .appointmentType(type)
-                .appointmentDate(appointmentOpenRequestDTO.getAppointmentDate())
-                .startTime(appointmentOpenRequestDTO.getStartTime())
-                .endTime(appointmentOpenRequestDTO.getEndTime())
-                .description(appointmentOpenRequestDTO.getDescription())
-                .status(AppointmentStatus.PENDING)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        // Step 4: Save appointment
+        Appointment appointment = appointmentRepository.save(
+                Appointment.builder()
+                        .customerId(customerUUID)
+                        .appointmentType(type)
+                        .appointmentDate(appointmentOpenRequestDTO.getAppointmentDate())
+                        .startTime(appointmentOpenRequestDTO.getStartTime())
+                        .endTime(appointmentOpenRequestDTO.getEndTime())
+                        .description(appointmentOpenRequestDTO.getDescription())
+                        .status(AppointmentStatus.PENDING)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build()
+        );
 
-        return appointmentRepository.save(appointment);
+        // Step 5: Notify lawyers AFTER save
+        try {
+            List<String> deviceTokens =
+                    authServiceClient.getMultipleDevicesToken(authUserIds);
+
+            if (!deviceTokens.isEmpty()) {
+                notificationService.sendToMultipleDevices(
+                        deviceTokens,
+                        "New Appointment Request",
+                        "A customer wants to book an appointment. Appointment ID: "
+                                + appointment.getId()
+                );
+            }
+        } catch (Exception e) {
+            log.error(
+                    "Failed to send appointment notification for appointmentId={}",
+                    appointment.getId(),
+                    e
+            );
+        }
+
+        return appointment;
     }
 
     @Transactional
-    public List<String> getAvailableLawyersForOpenAppointment(String authUserId, AppointmentOpenRequestDTO appointmentOpenRequestDTO) {
+    public List<AvailableLawyersResponse> getAvailableLawyersForOpenAppointment(String authUserId, AppointmentOpenRequestDTO appointmentOpenRequestDTO) {
 
         // Step 1: Customer existence check
         if (!profileServiceClient.isCustomerExist(UUID.fromString(authUserId))) {
@@ -408,7 +515,7 @@ public class AppointmentService {
                 .build();
 
         // Step 3: Call profile service to get available lawyers
-        List<String> availableLawyers = profileServiceClient.getAvailableLawyers(openAppointmentSearchDTO);
+        List<AvailableLawyersResponse> availableLawyers = profileServiceClient.getAvailableLawyers(openAppointmentSearchDTO);
 
         if (availableLawyers == null || availableLawyers.isEmpty()) {
             throw new ApiException("No available lawyers found for the requested time slot and apppointment type.", "NO_LAWYERS_FOUND", HttpStatus.NOT_FOUND);

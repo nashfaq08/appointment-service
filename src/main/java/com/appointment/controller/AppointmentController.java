@@ -5,6 +5,7 @@ import com.appointment.dto.AppointmentOpenRequestDTO;
 import com.appointment.dto.AppointmentWithTransactionDTO;
 import com.appointment.dto.StripeDTO;
 import com.appointment.dto.response.ApiResponse;
+import com.appointment.dto.response.AvailableLawyersResponse;
 import com.appointment.entities.Appointment;
 import com.appointment.service.AppointmentService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -56,7 +57,7 @@ public class AppointmentController {
 
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     @PostMapping("/getAvailableLawyers")
-    public ResponseEntity<List<String>> getAvailableLawyersForOpenAppointment(
+    public ResponseEntity<List<AvailableLawyersResponse>> getAvailableLawyersForOpenAppointment(
             @RequestBody AppointmentOpenRequestDTO appointmentOpenRequestDTO,
             Authentication authentication
     ) {

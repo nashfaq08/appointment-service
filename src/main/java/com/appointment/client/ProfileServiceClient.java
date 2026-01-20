@@ -1,10 +1,11 @@
 package com.appointment.client;
 
 import com.appointment.dto.*;
+import com.appointment.dto.response.AvailableLawyersResponse;
 import com.appointment.exception.ApiException;
-import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -12,7 +13,6 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,7 +53,8 @@ public class ProfileServiceClient {
         return response.getBody() != null && response.getBody();
     }
 
-    public List<String> getAvailableLawyers(OpenAppointmentSearchDTO openAppointmentSearchDTO) {
+    public List<AvailableLawyersResponse> getAvailableLawyers(
+            OpenAppointmentSearchDTO openAppointmentSearchDTO) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -65,19 +66,26 @@ public class ProfileServiceClient {
 
         log.info("Calling searchLawyersBySpecialityAndAvailability URL: {}", url);
 
-        HttpEntity<OpenAppointmentSearchDTO> entity = new HttpEntity<>(openAppointmentSearchDTO, headers);
+        HttpEntity<OpenAppointmentSearchDTO> entity =
+                new HttpEntity<>(openAppointmentSearchDTO, headers);
 
-        ResponseEntity<List> response = restTemplate.exchange(
-                url,
-                HttpMethod.POST,
-                entity,
-                List.class
+        ResponseEntity<List<AvailableLawyersResponse>> response =
+                restTemplate.exchange(
+                        url,
+                        HttpMethod.POST,
+                        entity,
+                        new ParameterizedTypeReference<>() {
+                        }
+                );
+
+        log.info(
+                "Response received from profile service for searchLawyersBySpecialityAndAvailability: {}",
+                response.getBody()
         );
 
-        log.info("Response received from profile service for searchLawyersBySpecialityAndAvailability: {}", response);
-
-        return response.getBody();
+        return response.getBody() != null ? response.getBody() : List.of();
     }
+
 
     public boolean isCustomerExist(UUID customerAuthId) {
 

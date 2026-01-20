@@ -7,7 +7,6 @@ import java.util.UUID;
 
 @Data
 public class AvailableLawyersResponse {
-
-    private List<UUID> lawyerIds;
-
+    private UUID lawyerId;
+    private UUID authUserId;
 }
