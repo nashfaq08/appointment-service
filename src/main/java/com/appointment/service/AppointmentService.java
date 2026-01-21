@@ -449,7 +449,35 @@ public class AppointmentService {
             );
         }
 
+        List<UUID> lawyerIds = availableLawyers.stream()
+                .map(AvailableLawyersResponse::getLawyerId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        List<UUID> busyLawyerIds = appointmentRepository.findBusyLawyerIds(
+                lawyerIds,
+                appointmentOpenRequestDTO.getAppointmentDate(),
+                appointmentOpenRequestDTO.getStartTime(),
+                appointmentOpenRequestDTO.getEndTime()
+        );
+
+        log.info("Busy lawyers for slot: {}", busyLawyerIds);
+
+        List<UUID> freeLawyerIds = lawyerIds.stream()
+                .filter(id -> !busyLawyerIds.contains(id))
+                .toList();
+
+        if (freeLawyerIds.isEmpty()) {
+            throw new ApiException(
+                    "All lawyers are already booked for the selected time slot.",
+                    "LAWYERS_NOT_AVAILABLE",
+                    HttpStatus.CONFLICT
+            );
+        }
+
         List<UUID> authUserIds = availableLawyers.stream()
+                .filter(l -> freeLawyerIds.contains(l.getLawyerId()))
                 .map(AvailableLawyersResponse::getAuthUserId)
                 .filter(Objects::nonNull)
                 .distinct()

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,4 +25,22 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     List<Appointment> findAllByCustomerId(UUID customerId);
     List<Appointment> findAll();
     List<Appointment> findAllByLawyerId(UUID lawyerId);
+
+    @Query("""
+        SELECT DISTINCT a.lawyerId
+        FROM Appointment a
+        WHERE a.lawyerId IN :lawyerIds
+          AND a.appointmentDate = :date
+          AND a.status IN ('BOOKED', 'PENDING')
+          AND (
+                :startTime < a.endTime
+            AND :endTime > a.startTime
+          )
+    """)
+    List<UUID> findBusyLawyerIds(
+            @Param("lawyerIds") List<UUID> lawyerIds,
+            @Param("date") LocalDate date,
+            @Param("startTime") LocalTime startTime,
+            @Param("endTime") LocalTime endTime
+    );
 }
