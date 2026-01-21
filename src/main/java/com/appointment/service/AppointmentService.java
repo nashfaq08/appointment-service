@@ -415,11 +415,11 @@ public class AppointmentService {
 
     @Transactional
     public Appointment createOpenAppointment(
-            String customerId,
+            String customerAuthUserId,
             AppointmentOpenRequestDTO appointmentOpenRequestDTO) {
 
         // Step 1: Validate customer
-        UUID customerUUID = UUID.fromString(customerId);
+        UUID customerUUID = UUID.fromString(customerAuthUserId);
         if (!profileServiceClient.isCustomerExist(customerUUID)) {
             throw new ApiException(
                     "Invalid or unapproved customer.",
@@ -512,6 +512,7 @@ public class AppointmentService {
                         deviceTokens,
                         "New Appointment Request",
                         "Tap to view and accept the appointment.",
+                        customerUUID,
                         appointment
                 );
             }
@@ -553,7 +554,7 @@ public class AppointmentService {
     }
 
     @Transactional
-    public void acceptOpenAppointment(UUID appointmentId, String lawyerAuthUserId) {
+    public void acceptOpenAppointment(UUID appointmentId, String lawyerAuthUserId, String customerAuthUserId) {
 
         // Verify lawyer existence & status (via profile service)
         if (!profileServiceClient.isLawyerValid(UUID.fromString(lawyerAuthUserId))) {
@@ -582,6 +583,10 @@ public class AppointmentService {
         appointment.setUpdatedAt(LocalDateTime.now());
 
         appointmentRepository.save(appointment);
+
+        // Send Notification to Customer
+        String customerDeviceToken = authServiceClient.getDeviceToken(UUID.fromString(customerAuthUserId));
+        notificationService.sendNotificationToDevice(customerDeviceToken, "Appointment Accepted", "Congratulations! Lawyer has accepted your appointment.");
     }
 
     public List<Appointment> getByCustomer(String customerAuthUserId) {

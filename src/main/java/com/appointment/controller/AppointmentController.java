@@ -65,15 +65,16 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getAvailableLawyersForOpenAppointment(authUserId, appointmentOpenRequestDTO));
     }
 
-    @PatchMapping("/{appointmentId}/accept")
+    @PatchMapping("/{appointmentId}/{customerAuthId}/accept")
     @PreAuthorize("hasRole('LAWYER')")
     public ResponseEntity<?> acceptAppointment(
             @PathVariable UUID appointmentId,
+            @PathVariable UUID customerAuthId,
             Authentication authentication
     ) {
         String lawyerAuthUserId = authentication.getName();
-        appointmentService.acceptOpenAppointment(appointmentId, lawyerAuthUserId);
-        return ResponseEntity.ok(new ApiResponse(true, "Appointment accepted."));
+        appointmentService.acceptOpenAppointment(appointmentId, lawyerAuthUserId, customerAuthId);
+        return ResponseEntity.ok(new ApiResponse(true, "Appointment is accepted by the Lawyer."));
     }
 
     @PreAuthorize("hasRole('CUSTOMER')")

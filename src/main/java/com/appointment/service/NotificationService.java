@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -33,7 +34,11 @@ public class NotificationService {
     }
 
     @Async
-    public void sendToMultipleDevices(List<String> tokens, String title, String body, Appointment appointment) {
+    public void sendToMultipleDevices(List<String> tokens,
+                                      String title,
+                                      String body,
+                                      UUID customerId,
+                                      Appointment appointment) {
         log.info("Sending notification to multiple devices");
 
         MulticastMessage message = MulticastMessage.builder()
@@ -46,6 +51,7 @@ public class NotificationService {
                 .putData("appointmentId", appointment.getId().toString())
                 .putData("appointmentType", appointment.getAppointmentType().getName())
                 .putData("appointmentDate", appointment.getAppointmentDate().toString())
+                .putData("customerId", customerId.toString())
                 .putData("startTime", appointment.getStartTime().toString())
                 .putData("endTime", appointment.getEndTime().toString())
                 .build();
