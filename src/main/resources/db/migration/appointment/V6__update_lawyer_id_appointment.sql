@@ -1,0 +1,2 @@
+ALTER TABLE appointment
+ALTER COLUMN lawyer_id DROP NOT NULL;

@@ -34,6 +34,7 @@ public class NotificationService {
     @Async
     public void sendToMultipleDevices(List<String> tokens, String title, String body) {
         log.info("Sending notification to multiple devices");
+
         MulticastMessage message = MulticastMessage.builder()
                 .addAllTokens(tokens)
                 .setNotification(Notification.builder()
@@ -41,11 +42,19 @@ public class NotificationService {
                         .setBody(body)
                         .build())
                 .build();
+
         try {
-            BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(message);
-            log.info("Notification sent to " + response.getSuccessCount() + " devices successfully.");
+            BatchResponse response =
+                    FirebaseMessaging.getInstance().sendEachForMulticast(message);
+
+            log.info(
+                    "Notification sent. success={}, failure={}",
+                    response.getSuccessCount(),
+                    response.getFailureCount()
+            );
+
         } catch (FirebaseMessagingException e) {
-            e.printStackTrace();
+            log.error("FCM error", e);
         }
     }
 }
