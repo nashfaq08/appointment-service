@@ -73,7 +73,7 @@ public class AppointmentController {
             Authentication authentication
     ) {
         String lawyerAuthUserId = authentication.getName();
-        appointmentService.acceptOpenAppointment(appointmentId, lawyerAuthUserId, customerAuthId);
+        appointmentService.acceptOpenAppointment(appointmentId, lawyerAuthUserId, String.valueOf(customerAuthId));
         return ResponseEntity.ok(new ApiResponse(true, "Appointment is accepted by the Lawyer."));
     }
 
