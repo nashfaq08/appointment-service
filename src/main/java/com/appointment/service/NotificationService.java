@@ -1,5 +1,6 @@
 package com.appointment.service;
 
+import com.appointment.entities.Appointment;
 import com.google.firebase.messaging.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -32,7 +33,7 @@ public class NotificationService {
     }
 
     @Async
-    public void sendToMultipleDevices(List<String> tokens, String title, String body) {
+    public void sendToMultipleDevices(List<String> tokens, String title, String body, Appointment appointment) {
         log.info("Sending notification to multiple devices");
 
         MulticastMessage message = MulticastMessage.builder()
@@ -41,6 +42,12 @@ public class NotificationService {
                         .setTitle(title)
                         .setBody(body)
                         .build())
+                .putData("eventType", "OPEN_APPOINTMENT")
+                .putData("appointmentId", appointment.getId().toString())
+                .putData("appointmentType", appointment.getAppointmentType().getName())
+                .putData("appointmentDate", appointment.getAppointmentDate().toString())
+                .putData("startTime", appointment.getStartTime().toString())
+                .putData("endTime", appointment.getEndTime().toString())
                 .build();
 
         try {

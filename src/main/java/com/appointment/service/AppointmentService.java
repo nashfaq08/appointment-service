@@ -511,8 +511,8 @@ public class AppointmentService {
                 notificationService.sendToMultipleDevices(
                         deviceTokens,
                         "New Appointment Request",
-                        "A customer wants to book an appointment. Appointment ID: "
-                                + appointment.getId()
+                        "Tap to view and accept the appointment.",
+                        appointment
                 );
             }
         } catch (Exception e) {
