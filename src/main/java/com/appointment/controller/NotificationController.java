@@ -22,11 +22,11 @@ public class NotificationController {
         return ResponseEntity.ok("Notification sent to device");
     }
 
-    @PreAuthorize("hasRole('CUSTOMER')")
-    @PostMapping("/send-multiple")
-    public ResponseEntity<String> sendNotificationToMultipleDevices(@RequestBody MultipleNotificationRequestDTO request) {
-        notificationService.sendToMultipleDevices(request.getTokens(), request.getTitle(), request.getMessage());
-        return ResponseEntity.ok("Notifications sent to multiple devices");
-    }
+//    @PreAuthorize("hasRole('CUSTOMER')")
+//    @PostMapping("/send-multiple")
+//    public ResponseEntity<String> sendNotificationToMultipleDevices(@RequestBody MultipleNotificationRequestDTO request) {
+//        notificationService.sendToMultipleDevices(request.getTokens(), request.getTitle(), request.getMessage());
+//        return ResponseEntity.ok("Notifications sent to multiple devices");
+//    }
 
 }

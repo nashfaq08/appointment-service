@@ -563,12 +563,21 @@ public class AppointmentService {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ApiException("Appointment not found", "APPOINTMENT_NOT_FOUND", HttpStatus.NOT_FOUND));
 
-        if (appointment.getStatus() != AppointmentStatus.OPEN) {
-            throw new ApiException("Appointment already taken.", "APPOINTMENT_ALREADY_BOOKED", HttpStatus.BAD_REQUEST);
+        if (appointment.getLawyerId() != null
+                || appointment.getStatus() != AppointmentStatus.PENDING) {
+
+            throw new ApiException(
+                    "Appointment already accepted by another lawyer.",
+                    "APPOINTMENT_ALREADY_ACCEPTED",
+                    HttpStatus.CONFLICT
+            );
         }
 
+        UUID lawyerId = profileServiceClient
+                .fetchLawyerId(UUID.fromString(lawyerAuthUserId));
+
         // Assign appointment to lawyer
-        appointment.setLawyerId(UUID.fromString(lawyerAuthUserId));
+        appointment.setLawyerId(lawyerId);
         appointment.setStatus(AppointmentStatus.BOOKED);
         appointment.setUpdatedAt(LocalDateTime.now());
 
