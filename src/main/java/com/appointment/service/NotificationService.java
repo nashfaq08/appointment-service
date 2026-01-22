@@ -33,6 +33,33 @@ public class NotificationService {
         }
     }
 
+    public void sendNotificationToCustomer(String token, String title, String message, Appointment appointment) {
+        try {
+            log.info("Sending notification to device with token {}", token);
+            Notification notification = Notification.builder()
+                    .setTitle(title)
+                    .setBody(message)
+                    .build();
+
+            log.info("Building message to contain the notification");
+            Message msg = Message.builder()
+                    .setToken(token)
+                    .setNotification(notification)
+                    .putData("appointmentId", appointment.getId().toString())
+                    .putData("appointmentType", appointment.getAppointmentType().getName())
+                    .putData("appointmentDate", appointment.getAppointmentDate().toString())
+                    .putData("lawyerId", appointment.getLawyerId().toString())
+                    .putData("startTime", appointment.getStartTime().toString())
+                    .putData("endTime", appointment.getEndTime().toString())
+                    .build();
+
+            String response = FirebaseMessaging.getInstance().send(msg);
+            log.info("Notification sent successfully {}", response);
+        } catch (Exception e) {
+            log.error("Failed to send notification to customer {}: {}", token, e.getMessage());
+        }
+    }
+
     @Async
     public void sendToMultipleDevices(List<String> tokens,
                                       String title,

@@ -586,7 +586,7 @@ public class AppointmentService {
 
         // Send Notification to Customer
         String customerDeviceToken = authServiceClient.getDeviceToken(UUID.fromString(customerAuthUserId));
-        notificationService.sendNotificationToDevice(customerDeviceToken, "Appointment Accepted", "Congratulations! Lawyer has accepted your appointment.");
+        notificationService.sendNotificationToCustomer(customerDeviceToken, "Appointment Accepted", "Congratulations! Lawyer has accepted your appointment.", appointment);
     }
 
     public List<Appointment> getByCustomer(String customerAuthUserId) {
