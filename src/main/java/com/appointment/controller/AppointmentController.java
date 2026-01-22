@@ -95,6 +95,15 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getByLawyer(lawyerAuthUserId));
     }
 
+    @PreAuthorize("hasRole('LAWYER')")
+    @GetMapping("/lawyer/pending")
+    public ResponseEntity<List<Appointment>> pendingByLawyer(
+            Authentication authentication
+    ) {
+        String lawyerAuthUserId = authentication.getName();
+        return ResponseEntity.ok(appointmentService.getPendingAppointmentsByLawyer(lawyerAuthUserId));
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/getLawyers")
     public ResponseEntity<List<Appointment>> getLawyers(

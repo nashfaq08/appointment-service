@@ -1,5 +1,6 @@
 package com.appointment.repositories;
 
+import com.appointment.constants.AppointmentStatus;
 import com.appointment.entities.Appointment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -25,6 +26,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     List<Appointment> findAllByCustomerId(UUID customerId);
     List<Appointment> findAll();
     List<Appointment> findAllByLawyerId(UUID lawyerId);
+    List<Appointment> findByLawyerIdAndStatus(
+            UUID lawyerId,
+            AppointmentStatus status
+    );
 
     @Query("""
         SELECT DISTINCT a.lawyerId

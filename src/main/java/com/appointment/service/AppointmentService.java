@@ -641,6 +641,16 @@ public class AppointmentService {
         return appointmentRepository.findAllByLawyerId(lawyerDetailsDTO.getId());
     }
 
+    public List<Appointment> getPendingAppointmentsByLawyer(String lawyerAuthUserId) {
+
+        LawyerDetailsDTO lawyerDetailsDTO = profileServiceClient.fetchLawyerServices(UUID.fromString(lawyerAuthUserId));
+
+        if (!profileServiceClient.isLawyerValid(UUID.fromString(lawyerAuthUserId))) {
+            throw new ApiException("lawyer not authorized to list the appointments.", "LAWYER_NOT_AUTHORIZED", HttpStatus.UNAUTHORIZED);
+        }
+        return appointmentRepository.findByLawyerIdAndStatus(lawyerDetailsDTO.getId(), AppointmentStatus.PENDING);
+    }
+
     public List<Appointment> getAppointmentsByLawyerId(UUID lawyerId) {
         if (!profileServiceClient.isLawyerValidByLawyerId(lawyerId)) {
             throw new ApiException("lawyer not authorized to list the appointments.", "LAWYER_NOT_AUTHORIZED", HttpStatus.UNAUTHORIZED);
