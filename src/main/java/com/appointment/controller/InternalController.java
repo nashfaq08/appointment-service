@@ -31,6 +31,14 @@ public class InternalController {
         return ResponseEntity.ok(appointmentService.getAppointmentsByLawyerId(lawyerId));
     }
 
+    @PreAuthorize("hasAuthority('INTERNAL_SERVICE')")
+    @GetMapping("/pending/appointments/lawyer/{lawyerId}")
+    public ResponseEntity<List<Appointment>> pendingAppointmentsByLawyer(
+            @PathVariable UUID lawyerId
+    ) {
+        return ResponseEntity.ok(appointmentService.getPendingAppointmentsByLawyer(lawyerId));
+    }
+
 //    @PreAuthorize("hasAuthority('INTERNAL_SERVICE')")
 //    @PostMapping("/book")
 //    public ResponseEntity<Appointment> bookAppointmentv1(
