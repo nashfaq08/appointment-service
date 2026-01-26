@@ -631,6 +631,52 @@ public class AppointmentService {
         return appointmentRepository.findAllByCustomerId(customerAuthId);
     }
 
+    public List<Appointment> getAcceptedAppointmentsByCustomer(String customerAuthUserId) {
+
+        log.info("Fetching appointments for customer auth id: {}", customerAuthUserId);
+
+        UUID customerAuthId;
+        try {
+            customerAuthId = UUID.fromString(customerAuthUserId);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid customer auth user ID format: {}", customerAuthUserId, e);
+            throw new ApiException(
+                    "Invalid customer authentication ID format.",
+                    "INVALID_CUSTOMER_ID",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        // Fetch customer profile or handle if missing
+        CustomerDTO customer;
+        try {
+            customer = profileServiceClient.fetchCustomerIfExists(customerAuthId);
+            if (customer == null) {
+                log.warn("Customer with auth user ID {} does not exist", customerAuthId);
+                throw new ApiException(
+                        "Customer not authorized to list the appointments.",
+                        "CUSTOMER_NOT_AUTHORIZED",
+                        HttpStatus.UNAUTHORIZED
+                );
+            }
+        } catch (Exception e) {
+            log.error("Error while verifying customer existence for ID {}: {}", customerAuthId, e.getMessage(), e);
+            throw new ApiException(
+                    "Failed to validate customer. Please try again later.",
+                    "CUSTOMER_LOOKUP_FAILED",
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+
+        log.info("Customer {} exists. Fetching appointments...", customerAuthId);
+
+        List<Appointment> acceptedAppointments = appointmentRepository.findAllByCustomerIdAndStatus(customerAuthId, AppointmentStatus.ACCEPTED);
+
+        log.info("Found {} Accepted Appointments for Customer {}", acceptedAppointments.size(), customer.getName());
+
+        return acceptedAppointments;
+    }
+
     public List<Appointment> getByLawyer(String lawyerAuthUserId) {
 
         LawyerDetailsDTO lawyerDetailsDTO = profileServiceClient.fetchLawyerServices(UUID.fromString(lawyerAuthUserId));

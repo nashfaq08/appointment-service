@@ -86,6 +86,15 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getByCustomer(customerAuthUserId));
     }
 
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @GetMapping("/accepted")
+    public ResponseEntity<List<Appointment>> acceptedAppointmentsByCustomer(
+            Authentication authentication
+    ) {
+        String customerAuthUserId = authentication.getName();
+        return ResponseEntity.ok(appointmentService.getAcceptedAppointmentsByCustomer(customerAuthUserId));
+    }
+
     @PreAuthorize("hasRole('LAWYER')")
     @GetMapping("/lawyer")
     public ResponseEntity<List<Appointment>> byLawyer(
