@@ -87,12 +87,12 @@ public class AppointmentController {
     }
 
     @PreAuthorize("hasRole('CUSTOMER')")
-    @GetMapping("/accepted")
+    @GetMapping("/filteredAppointments")
     public ResponseEntity<List<Appointment>> acceptedAppointmentsByCustomer(
             Authentication authentication
     ) {
         String customerAuthUserId = authentication.getName();
-        return ResponseEntity.ok(appointmentService.getAcceptedAppointmentsByCustomer(customerAuthUserId));
+        return ResponseEntity.ok(appointmentService.getFilteredAppointmentsByCustomer(customerAuthUserId));
     }
 
     @PreAuthorize("hasRole('LAWYER')")

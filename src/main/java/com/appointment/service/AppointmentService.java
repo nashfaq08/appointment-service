@@ -631,7 +631,7 @@ public class AppointmentService {
         return appointmentRepository.findAllByCustomerId(customerAuthId);
     }
 
-    public List<Appointment> getAcceptedAppointmentsByCustomer(String customerAuthUserId) {
+    public List<Appointment> getFilteredAppointmentsByCustomer(String customerAuthUserId) {
 
         log.info("Fetching appointments for customer auth id: {}", customerAuthUserId);
 
@@ -670,9 +670,9 @@ public class AppointmentService {
 
         log.info("Customer {} exists. Fetching appointments...", customerAuthId);
 
-        List<Appointment> acceptedAppointments = appointmentRepository.findAllByCustomerIdAndStatus(customerAuthId, AppointmentStatus.ACCEPTED);
+        List<Appointment> acceptedAppointments = appointmentRepository.findAllByCustomerIdAndStatusIn(customerAuthId, List.of(AppointmentStatus.ACCEPTED, AppointmentStatus.PENDING));
 
-        log.info("Found {} Accepted Appointments for Customer {}", acceptedAppointments.size(), customer.getName());
+        log.info("Found {} Accepted & Pending Appointments for Customer {}", acceptedAppointments.size(), customer.getName());
 
         return acceptedAppointments;
     }
