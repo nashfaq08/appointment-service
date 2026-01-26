@@ -579,7 +579,7 @@ public class AppointmentService {
 
         // Assign appointment to lawyer
         appointment.setLawyerId(lawyerId);
-        appointment.setStatus(AppointmentStatus.BOOKED);
+        appointment.setStatus(AppointmentStatus.ACCEPTED);
         appointment.setUpdatedAt(LocalDateTime.now());
 
         appointmentRepository.save(appointment);
