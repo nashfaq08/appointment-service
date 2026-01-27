@@ -693,7 +693,12 @@ public class AppointmentService {
         }
 
         UUID lawyerId = profileServiceClient.fetchLawyerId(UUID.fromString(lawyerAuthUserId));
-        return appointmentRepository.findByLawyerIdAndStatus(lawyerId, AppointmentStatus.PENDING);
+        log.info("Fetching PENDING appointments for lawyer Id {}", lawyerId);
+
+        List<Appointment> pendingAppointments = appointmentRepository.findByLawyerIdAndStatus(lawyerId, AppointmentStatus.PENDING);
+        log.info("Fetched {} PENDING appointments for lawyer Id {}", pendingAppointments.size(), lawyerId);
+
+        return pendingAppointments;
     }
 
     public List<Appointment> getAppointmentsByLawyerId(UUID lawyerId) {
