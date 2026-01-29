@@ -94,12 +94,16 @@ public class AppointmentService {
         LocalTime newStart = startTime;
         LocalTime newEnd = newStart.plusMinutes(30);  // 30-minute slot
 
+        log.info("Checking appointments overlapping");
+
         for (Appointment existing : existingAppointments) {
 
             LocalTime existingStart = existing.getStartTime();
             LocalTime existingEnd = existingStart.plusMinutes(30); // fixed 30-minute slot
 
             boolean overlaps = newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart);
+
+            log.info("Checked appointment {} overlaps {}", existing.getDescription(), overlaps);
 
             if (overlaps) {
                 throw new ApiException(
@@ -152,31 +156,33 @@ public class AppointmentService {
         List<Appointment> existingAppointments = appointmentRepository
                 .findByLawyerIdAndAppointmentDate(stripeDTO.getLawyerId(), LocalDate.parse(stripeDTO.getAppointmentDate()));
 
+        log.info("Fetched {} existing appointments on date {}", existingAppointments.size(), stripeDTO.getAppointmentDate());
+
         checkAppointmentOverlap(LocalTime.parse(stripeDTO.getStartTime()), existingAppointments);
 
         if (existingAppointments.isEmpty()) {
             log.info("No existing appointment for lawyer {} in the given timeslot", stripeDTO.getLawyerId());
         }
 
-        for (Appointment existing : existingAppointments) {
-            // First check if they are on the same date
-            if (existing.getAppointmentDate().toString().equals(stripeDTO.getAppointmentDate())) {
-
-                LocalTime newStart = LocalTime.parse(stripeDTO.getStartTime());
-                LocalTime newEnd = newStart.plusMinutes(30);
-
-                boolean overlaps = !(newEnd.isBefore(existing.getStartTime())
-                        || newStart.isAfter(existing.getEndTime()));
-
-                if (overlaps) {
-                    throw new ApiException(
-                            "An appointment already exists for the specified time slot.",
-                            "APPOINTMENT_ALREADY_EXISTS",
-                            HttpStatus.BAD_REQUEST
-                    );
-                }
-            }
-        }
+//        for (Appointment existing : existingAppointments) {
+//            // First check if they are on the same date
+//            if (existing.getAppointmentDate().toString().equals(stripeDTO.getAppointmentDate())) {
+//
+//                LocalTime newStart = LocalTime.parse(stripeDTO.getStartTime());
+//                LocalTime newEnd = newStart.plusMinutes(30);
+//
+//                boolean overlaps = !(newEnd.isBefore(existing.getStartTime())
+//                        || newStart.isAfter(existing.getEndTime()));
+//
+//                if (overlaps) {
+//                    throw new ApiException(
+//                            "An appointment already exists for the specified time slot.",
+//                            "APPOINTMENT_ALREADY_EXISTS",
+//                            HttpStatus.BAD_REQUEST
+//                    );
+//                }
+//            }
+//        }
 
         // Step 4: Prepare and save
 //        UUID custId = UUID.fromString(stripeDTO.getCustomer_details().getId());
