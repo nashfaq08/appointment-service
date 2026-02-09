@@ -1,5 +1,6 @@
 package com.appointment.service;
 
+import com.appointment.dto.AppointmentOpenRequestDTO;
 import com.appointment.entities.Appointment;
 import com.google.firebase.messaging.*;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +66,7 @@ public class NotificationService {
                                       String title,
                                       String body,
                                       UUID customerId,
-                                      Appointment appointment) {
+                                      AppointmentOpenRequestDTO appointmentOpenRequestDTO) {
         log.info("Sending notification to multiple devices");
 
         MulticastMessage message = MulticastMessage.builder()
@@ -75,12 +76,12 @@ public class NotificationService {
                         .setBody(body)
                         .build())
                 .putData("eventType", "OPEN_APPOINTMENT")
-                .putData("appointmentId", appointment.getId().toString())
-                .putData("appointmentType", appointment.getAppointmentType().getName())
-                .putData("appointmentDate", appointment.getAppointmentDate().toString())
+//                .putData("appointmentId", appointment.getId().toString())
+                .putData("appointmentType", appointmentOpenRequestDTO.getAppointmentType())
+                .putData("appointmentDate", appointmentOpenRequestDTO.getAppointmentDate().toString())
                 .putData("customerId", customerId.toString())
-                .putData("startTime", appointment.getStartTime().toString())
-                .putData("endTime", appointment.getEndTime().toString())
+                .putData("startTime", appointmentOpenRequestDTO.getStartTime().toString())
+                .putData("endTime", appointmentOpenRequestDTO.getEndTime().toString())
                 .build();
 
         try {
