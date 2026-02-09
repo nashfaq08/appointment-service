@@ -51,8 +51,8 @@ public class AppointmentController {
             Authentication authentication
     ) {
         String customerId = authentication.getName();
-        String openAppointmentRequest = appointmentService.createOpenAppointment(customerId, appointmentOpenRequestDTO);
-        return ResponseEntity.ok(openAppointmentRequest);
+        Appointment appointment = appointmentService.createOpenAppointment(customerId, appointmentOpenRequestDTO);
+        return ResponseEntity.ok(appointment);
     }
 
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")

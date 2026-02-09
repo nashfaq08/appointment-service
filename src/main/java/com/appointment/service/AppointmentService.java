@@ -420,7 +420,7 @@ public class AppointmentService {
 //    }
 
     @Transactional
-    public String createOpenAppointment(
+    public Appointment createOpenAppointment(
             String customerAuthUserId,
             AppointmentOpenRequestDTO appointmentOpenRequestDTO) {
 
@@ -494,19 +494,19 @@ public class AppointmentService {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid appointment type"));
 
         // Step 4: Save appointment
-//        Appointment appointment = appointmentRepository.save(
-//                Appointment.builder()
-//                        .customerId(customerUUID)
-//                        .appointmentType(type)
-//                        .appointmentDate(appointmentOpenRequestDTO.getAppointmentDate())
-//                        .startTime(appointmentOpenRequestDTO.getStartTime())
-//                        .endTime(appointmentOpenRequestDTO.getEndTime())
-//                        .description(appointmentOpenRequestDTO.getDescription())
-//                        .status(AppointmentStatus.PENDING)
-//                        .createdAt(LocalDateTime.now())
-//                        .updatedAt(LocalDateTime.now())
-//                        .build()
-//        );
+        Appointment appointment = appointmentRepository.save(
+                Appointment.builder()
+                        .customerId(customerUUID)
+                        .appointmentType(type)
+                        .appointmentDate(appointmentOpenRequestDTO.getAppointmentDate())
+                        .startTime(appointmentOpenRequestDTO.getStartTime())
+                        .endTime(appointmentOpenRequestDTO.getEndTime())
+                        .description(appointmentOpenRequestDTO.getDescription())
+                        .status(AppointmentStatus.PENDING)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build()
+        );
 
         // Step 5: Notify lawyers AFTER save
         try {
@@ -519,20 +519,18 @@ public class AppointmentService {
                         "New Appointment Request",
                         "Tap to view and accept the appointment.",
                         customerUUID,
-                        appointmentOpenRequestDTO
+                        appointment
                 );
             }
         } catch (Exception e) {
             log.error(
-                    "Failed to send open appointment notification for appointment Type={} and description={}",
-                    type,
-                    appointmentOpenRequestDTO.getDescription(),
+                    "Failed to send appointment notification for appointmentId={}",
+                    appointment.getId(),
                     e
             );
         }
-        log.info("Open appointment notification sent successfully.");
 
-        return "Open Appointment Request Notification sent Successfully!";
+        return appointment;
     }
 
     @Transactional
