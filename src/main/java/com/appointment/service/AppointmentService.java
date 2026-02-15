@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.*;
@@ -926,6 +927,19 @@ public class AppointmentService {
             }).toList();
         }
     }
+
+    @Scheduled(fixedRate = 600000)
+    public void expireStaleAppointments() {
+        log.info("Starting the job to EXPIRE the stale appointments");
+        LocalDateTime threshold = LocalDateTime.now().minusMinutes(10);
+        List<Appointment> staleAppointments = appointmentRepository.findByStatusAndCreatedAtBefore(AppointmentStatus.PENDING, threshold);
+        for (Appointment a : staleAppointments) {
+            a.setStatus(AppointmentStatus.EXPIRED);
+            appointmentRepository.save(a);
+        }
+        log.info("{} stale appointments have been EXPIRED", staleAppointments.size());
+    }
+
 
 //    public List<Appointment> getByLawyer(UUID lawyerId) {
 //        return appointmentRepository.findByLawyerId(lawyerId);
