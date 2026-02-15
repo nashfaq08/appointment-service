@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -77,6 +78,17 @@ public class AppointmentController {
         return ResponseEntity.ok(new ApiResponse(true, "Appointment is accepted by the Lawyer."));
     }
 
+    @PostMapping("/{id}/decline")
+    @PreAuthorize("hasRole('LAWYER')")
+    public ResponseEntity<?> declineAppointment(
+            @PathVariable UUID appointmentId,
+            Authentication authentication
+    ) {
+        String lawyerAuthUserId = authentication.getName();
+        appointmentService.declineAppointment(appointmentId, lawyerAuthUserId);
+        return ResponseEntity.ok(Map.of("message", "Appointment declined"));
+    }
+
     @PreAuthorize("hasRole('CUSTOMER')")
     @GetMapping("/customer")
     public ResponseEntity<List<Appointment>> byCustomer(
@@ -110,7 +122,7 @@ public class AppointmentController {
             Authentication authentication
     ) {
         String lawyerAuthUserId = authentication.getName();
-        return ResponseEntity.ok(appointmentService.getPendingAppointmentsByLawyer(lawyerAuthUserId));
+        return ResponseEntity.ok(appointmentService.getPendingAppointmentsForLawyer(lawyerAuthUserId));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

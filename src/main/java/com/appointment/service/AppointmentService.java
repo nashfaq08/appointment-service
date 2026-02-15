@@ -3,12 +3,15 @@ package com.appointment.service;
 import com.appointment.client.AuthServiceClient;
 import com.appointment.client.ProfileServiceClient;
 import com.appointment.constants.AppointmentStatus;
+import com.appointment.constants.CandidateStatus;
 import com.appointment.dto.*;
 import com.appointment.dto.response.AvailableLawyersResponse;
 import com.appointment.entities.Appointment;
+import com.appointment.entities.AppointmentLawyerCandidate;
 import com.appointment.entities.AppointmentType;
 import com.appointment.entities.Transaction;
 import com.appointment.exception.ApiException;
+import com.appointment.repositories.AppointmentLawyerCandidateRepository;
 import com.appointment.repositories.AppointmentRepository;
 import com.appointment.repositories.AppointmentTypeRepository;
 import com.appointment.repositories.TransactionRepository;
@@ -22,9 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.*;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,10 +33,12 @@ import java.util.stream.Collectors;
 public class AppointmentService {
 
     private final NotificationService notificationService;
+    private final AppointmentCandidateService appointmentCandidateService;
     private final EmailService emailService;
     private final AppointmentRepository appointmentRepository;
     private final AppointmentTypeRepository appointmentTypeRepository;
     private final TransactionRepository transactionRepository;
+    private final AppointmentLawyerCandidateRepository candidateRepository;
     private final ProfileServiceClient profileServiceClient;
     private final AuthServiceClient authServiceClient;
 
@@ -508,6 +511,9 @@ public class AppointmentService {
                         .build()
         );
 
+        // Step 4.1: Save appointment candidates
+        appointmentCandidateService.createCandidates(appointment, freeLawyerIds);
+
         // Step 5: Notify lawyers AFTER save
         try {
             List<String> deviceTokens =
@@ -562,10 +568,14 @@ public class AppointmentService {
     @Transactional
     public void acceptOpenAppointment(UUID appointmentId, String lawyerAuthUserId, String customerAuthUserId) {
 
+        log.info("Accepting open appointment for appointment id={}", appointmentId);
+
         // Verify lawyer existence & status (via profile service)
         if (!profileServiceClient.isLawyerValid(UUID.fromString(lawyerAuthUserId))) {
             throw new ApiException("Lawyer not authorized to accept this appointment.", "LAWYER_NOT_AUTHORIZED", HttpStatus.UNAUTHORIZED);
         }
+
+        log.info("Fetching appointment details by id={}", appointmentId);
 
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ApiException("Appointment not found", "APPOINTMENT_NOT_FOUND", HttpStatus.NOT_FOUND));
@@ -580,8 +590,16 @@ public class AppointmentService {
             );
         }
 
+        log.info("Fetching Lawyer Id by lawyer auth user id {}", lawyerAuthUserId);
+
         UUID lawyerId = profileServiceClient
                 .fetchLawyerId(UUID.fromString(lawyerAuthUserId));
+
+        AppointmentLawyerCandidate appointmentLawyerCandidate =
+                candidateRepository.findByAppointmentIdAndLawyerId(appointmentId, lawyerId)
+                        .orElseThrow(() -> new RuntimeException("You are not a candidate for this appointment"));
+
+        log.info("Updating the appointment to be in ACCEPTED state for lawyer id={}, Appointment id={}", lawyerId, appointmentId);
 
         // Assign appointment to lawyer
         appointment.setLawyerId(lawyerId);
@@ -590,9 +608,39 @@ public class AppointmentService {
 
         appointmentRepository.save(appointment);
 
+        log.info("Fetching all candidates for the provided appointment id={}", appointmentId);
+
+        // Update candidate statuses
+        List<AppointmentLawyerCandidate> allCandidates =
+                candidateRepository.findByAppointmentId(appointmentId);
+
+        for (AppointmentLawyerCandidate c : allCandidates) {
+            if (c.getLawyerId().equals(lawyerId)) {
+                c.setStatus(CandidateStatus.ACCEPTED);
+            } else {
+                c.setStatus(CandidateStatus.DECLINED);
+            }
+        }
+
+        candidateRepository.saveAll(allCandidates);
+
         // Send Notification to Customer
         String customerDeviceToken = authServiceClient.getDeviceToken(UUID.fromString(customerAuthUserId));
         notificationService.sendNotificationToCustomer(customerDeviceToken, "Appointment Accepted", "Congratulations! Lawyer has accepted your appointment.", appointment);
+    }
+
+    @Transactional
+    public void declineAppointment(UUID appointmentId, String lawyerAuthUserId) {
+
+        UUID lawyerId = profileServiceClient
+                .fetchLawyerId(UUID.fromString(lawyerAuthUserId));
+
+        AppointmentLawyerCandidate candidate =
+                candidateRepository.findByAppointmentIdAndLawyerId(appointmentId, lawyerId)
+                        .orElseThrow(() -> new RuntimeException("Candidate not found"));
+
+        candidate.setStatus(CandidateStatus.DECLINED);
+        candidateRepository.save(candidate);
     }
 
     public List<Appointment> getByCustomer(String customerAuthUserId) {
@@ -705,6 +753,22 @@ public class AppointmentService {
         log.info("Fetched {} PENDING appointments for lawyer Id {}", pendingAppointments.size(), lawyerId);
 
         return pendingAppointments;
+    }
+
+    // Lawyer sees pending requests
+    public List<Appointment> getPendingAppointmentsForLawyer(String lawyerAuthUserId) {
+
+        if (!profileServiceClient.isLawyerValid(UUID.fromString(lawyerAuthUserId))) {
+            throw new ApiException("lawyer not authorized to list the appointments.", "LAWYER_NOT_AUTHORIZED", HttpStatus.UNAUTHORIZED);
+        }
+
+        UUID lawyerId = profileServiceClient.fetchLawyerId(UUID.fromString(lawyerAuthUserId));
+        log.info("Fetching PENDING appointments for lawyer Id {}", lawyerId);
+
+        return candidateRepository.findByLawyerIdAndStatus(lawyerId, CandidateStatus.PENDING)
+                .stream()
+                .map(AppointmentLawyerCandidate::getAppointment)
+                .toList();
     }
 
     public List<Appointment> getAppointmentsByLawyerId(UUID lawyerId) {

@@ -245,5 +245,40 @@ public class ProfileServiceClient {
         }
     }
 
+    public List<LawyerDetailsDTO> fetchLawyerServices(List<UUID> lawyerIds) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Internal-Secret", internalServiceSecret);
+
+        HttpEntity<List<UUID>> requestEntity = new HttpEntity<>(lawyerIds, headers);
+
+        String url = profileServiceUrl + "/internal/lawyers/details";
+
+        log.info("Calling profile service for lawyer IDs: {}", lawyerIds);
+
+        try {
+            ResponseEntity<List<LawyerDetailsDTO>> response =
+                    restTemplate.exchange(
+                            url,
+                            HttpMethod.POST,
+                            requestEntity,
+                            new ParameterizedTypeReference<>() {
+                            }
+                    );
+
+            return response.getBody();
+
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            log.error("Error while calling profile service (Status: {}): {}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw e;
+        } catch (ResourceAccessException e) {
+            throw new ApiException(
+                    "Profile service unreachable",
+                    "PROFILE_SERVICE_DOWN",
+                    HttpStatus.SERVICE_UNAVAILABLE
+            );
+        }
+    }
 
 }
