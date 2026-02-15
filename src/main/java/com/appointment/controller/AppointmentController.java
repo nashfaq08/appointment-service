@@ -6,6 +6,7 @@ import com.appointment.dto.AppointmentWithTransactionDTO;
 import com.appointment.dto.StripeDTO;
 import com.appointment.dto.response.ApiResponse;
 import com.appointment.dto.response.AvailableLawyersResponse;
+import com.appointment.dto.response.CustomerAppointmentResponseDTO;
 import com.appointment.entities.Appointment;
 import com.appointment.service.AppointmentService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -100,7 +101,7 @@ public class AppointmentController {
 
     @PreAuthorize("hasRole('CUSTOMER')")
     @GetMapping("/filteredAppointments")
-    public ResponseEntity<List<Appointment>> acceptedAppointmentsByCustomer(
+    public ResponseEntity<List<CustomerAppointmentResponseDTO>> acceptedAppointmentsByCustomer(
             Authentication authentication
     ) {
         String customerAuthUserId = authentication.getName();

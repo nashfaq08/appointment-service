@@ -16,4 +16,9 @@ public interface AppointmentLawyerCandidateRepository
     Optional<AppointmentLawyerCandidate> findByAppointmentIdAndLawyerId(UUID appointmentId, UUID lawyerId);
 
     List<AppointmentLawyerCandidate> findByAppointmentId(UUID appointmentId);
+
+    List<AppointmentLawyerCandidate> findByAppointmentId(Long appointmentId);
+
+    Optional<AppointmentLawyerCandidate> findByAppointmentIdAndStatus(Long appointmentId, CandidateStatus status);
+
 }

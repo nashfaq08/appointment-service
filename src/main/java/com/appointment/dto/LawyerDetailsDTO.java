@@ -10,4 +10,5 @@ public class LawyerDetailsDTO {
     private List<ServiceGroupDTO> services;
     private UUID id;
     private UUID authUserId;
+    private String fullName;
 }

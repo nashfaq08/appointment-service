@@ -6,6 +6,7 @@ import com.appointment.constants.AppointmentStatus;
 import com.appointment.constants.CandidateStatus;
 import com.appointment.dto.*;
 import com.appointment.dto.response.AvailableLawyersResponse;
+import com.appointment.dto.response.CustomerAppointmentResponseDTO;
 import com.appointment.entities.Appointment;
 import com.appointment.entities.AppointmentLawyerCandidate;
 import com.appointment.entities.AppointmentType;
@@ -39,7 +40,7 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final AppointmentTypeRepository appointmentTypeRepository;
     private final TransactionRepository transactionRepository;
-    private final AppointmentLawyerCandidateRepository candidateRepository;
+    private final AppointmentLawyerCandidateRepository appointmentLawyerCandidateRepository;
     private final ProfileServiceClient profileServiceClient;
     private final AuthServiceClient authServiceClient;
 
@@ -597,7 +598,7 @@ public class AppointmentService {
                 .fetchLawyerId(UUID.fromString(lawyerAuthUserId));
 
         AppointmentLawyerCandidate appointmentLawyerCandidate =
-                candidateRepository.findByAppointmentIdAndLawyerId(appointmentId, lawyerId)
+                appointmentLawyerCandidateRepository.findByAppointmentIdAndLawyerId(appointmentId, lawyerId)
                         .orElseThrow(() -> new RuntimeException("You are not a candidate for this appointment"));
 
         log.info("Updating the appointment to be in ACCEPTED state for lawyer id={}, Appointment id={}", lawyerId, appointmentId);
@@ -613,7 +614,7 @@ public class AppointmentService {
 
         // Update candidate statuses
         List<AppointmentLawyerCandidate> allCandidates =
-                candidateRepository.findByAppointmentId(appointmentId);
+                appointmentLawyerCandidateRepository.findByAppointmentId(appointmentId);
 
         for (AppointmentLawyerCandidate c : allCandidates) {
             if (c.getLawyerId().equals(lawyerId)) {
@@ -623,7 +624,7 @@ public class AppointmentService {
             }
         }
 
-        candidateRepository.saveAll(allCandidates);
+        appointmentLawyerCandidateRepository.saveAll(allCandidates);
 
         // Send Notification to Customer
         String customerDeviceToken = authServiceClient.getDeviceToken(UUID.fromString(customerAuthUserId));
@@ -637,11 +638,11 @@ public class AppointmentService {
                 .fetchLawyerId(UUID.fromString(lawyerAuthUserId));
 
         AppointmentLawyerCandidate candidate =
-                candidateRepository.findByAppointmentIdAndLawyerId(appointmentId, lawyerId)
+                appointmentLawyerCandidateRepository.findByAppointmentIdAndLawyerId(appointmentId, lawyerId)
                         .orElseThrow(() -> new RuntimeException("Candidate not found"));
 
         candidate.setStatus(CandidateStatus.DECLINED);
-        candidateRepository.save(candidate);
+        appointmentLawyerCandidateRepository.save(candidate);
     }
 
     public List<Appointment> getByCustomer(String customerAuthUserId) {
@@ -686,7 +687,7 @@ public class AppointmentService {
         return appointmentRepository.findAllByCustomerId(customerAuthId);
     }
 
-    public List<Appointment> getFilteredAppointmentsByCustomer(String customerAuthUserId) {
+    public List<CustomerAppointmentResponseDTO> getFilteredAppointmentsByCustomer(String customerAuthUserId) {
 
         log.info("Fetching appointments for customer auth id: {}", customerAuthUserId);
 
@@ -725,11 +726,48 @@ public class AppointmentService {
 
         log.info("Customer {} exists. Fetching appointments...", customerAuthId);
 
-        List<Appointment> acceptedAppointments = appointmentRepository.findAllByCustomerIdAndStatusIn(customerAuthId, List.of(AppointmentStatus.ACCEPTED, AppointmentStatus.PENDING));
+        List<Appointment> appointments = appointmentRepository
+                .findAllByCustomerIdAndStatusIn(
+                        customerAuthId,
+                        List.of(AppointmentStatus.PENDING, AppointmentStatus.ACCEPTED, AppointmentStatus.BOOKED)
+                );
 
-        log.info("Found {} Accepted & Pending Appointments for Customer {}", acceptedAppointments.size(), customer.getName());
+        log.info("Found {} Accepted, Booked & Pending Appointments for Customer {}", appointments.size(), customer.getName());
 
-        return acceptedAppointments;
+        return appointments.stream().map(appointment -> {
+
+            CustomerAppointmentResponseDTO.CustomerAppointmentResponseDTOBuilder builder =
+                    CustomerAppointmentResponseDTO.builder()
+                            .appointmentId(appointment.getId())
+                            .status(appointment.getStatus())
+                            .appointmentDate(appointment.getAppointmentDate())
+                            .startTime(appointment.getStartTime())
+                            .endTime(appointment.getEndTime());
+
+            if (appointment.getStatus() == AppointmentStatus.PENDING) {
+
+                List<AppointmentLawyerCandidate> candidates =
+                        appointmentLawyerCandidateRepository.findByAppointmentId(appointment.getId());
+
+                long acceptedCount = candidates.stream()
+                        .filter(c -> c.getStatus() == CandidateStatus.ACCEPTED)
+                        .count();
+
+                builder.invitedLawyersCount(candidates.size());
+                builder.acceptedCount((int) acceptedCount);
+
+            } else {
+                // ACCEPTED or BOOKED
+                builder.lawyerId(appointment.getLawyerId());
+
+                // Optional: fetch lawyer name from profile service
+                LawyerDetailsDTO lawyer = profileServiceClient.fetchLawyerServices(appointment.getLawyerId());
+                builder.lawyerName(lawyer != null ? lawyer.getFullName() : null);
+            }
+
+            return builder.build();
+
+        }).toList();
     }
 
     public List<Appointment> getByLawyer(String lawyerAuthUserId) {
@@ -766,7 +804,7 @@ public class AppointmentService {
         UUID lawyerId = profileServiceClient.fetchLawyerId(UUID.fromString(lawyerAuthUserId));
         log.info("Fetching PENDING appointments for lawyer Id {}", lawyerId);
 
-        return candidateRepository.findByLawyerIdAndStatus(lawyerId, CandidateStatus.PENDING)
+        return appointmentLawyerCandidateRepository.findByLawyerIdAndStatus(lawyerId, CandidateStatus.PENDING)
                 .stream()
                 .map(AppointmentLawyerCandidate::getAppointment)
                 .toList();
